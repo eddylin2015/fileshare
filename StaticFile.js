@@ -27,7 +27,7 @@ var Static_File = (function () {
                     }
                     res.write(sdata);
                     res.end();
-                    console.log('end ' + filename);
+			console.log('end ' + filename);
                     return;
                 });
             }
@@ -89,7 +89,7 @@ var Static_File = (function () {
                 }
                 else {
                     //specify Content will be an attachment
-                    res.setHeader('Content-disposition', 'attachment; filename=' + query.file);
+                    res.setHeader('Content-disposition', 'attachment; filename=' + encodeURI(query.file));
                     res.end(content);
                 }
             });
@@ -164,7 +164,7 @@ var Static_File = (function () {
             }
             else {
                 //filelist.push(file);
-                res.write("<a href=/down?file=" + file + ">" + file + "</a><br>");
+                res.write("<a href=/down?file=" + encodeURI(file) + ">" + file + "</a><br>");
             }
         });
         res.end();

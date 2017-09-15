@@ -50,7 +50,7 @@ function WebRouter(req, res) {
 		return;
 	}
 
-	var dir = 'G:/studmark/1617_final/out/';
+	var dir = 'tmp/';
 	
 //	var coolauth = require('./coolauth');
 //var auth_username = coolauth.auth(req, res);
