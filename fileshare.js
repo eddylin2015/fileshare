@@ -1,6 +1,6 @@
 'use strict'
 
-const formidable = require('formidable');
+const   formidable = require('formidable');
 const 	https = require('http');
 const 	util = require('util');
 const 	fs = require("fs");
@@ -10,19 +10,19 @@ const 	querystring = require('querystring');
 
 const hostdir = "www/";  //www
 
-var express = require('express');
-var app = express();
+var server =null;
+if (process.argv.length >= 3 && process.argv[2]=='-e') {
+	console.log("None Express component!");
+    server = https.createServer(WebRouter);	
+}else{
+	console.log("Express component!");
+	var express = require('express');
+	var app = express();
+	app.disable('x-powered-by');
+	app.use( function (req, res) {	WebRouter(req, res);});
+	server = https.createServer(app);
+}
 
-app.disable('x-powered-by');
-
-
-//app.use('*', function (req, res) {
-// logger(); next();
-//});
-app.use( function (req, res) {
-	WebRouter(req, res);
-});
-var server = https.createServer(app);
 server.listen(80, function () {
 	console.log("server running at https://IP_ADDRESS:80/")
 });
@@ -49,8 +49,8 @@ function WebRouter(req, res) {
 		staticfile._pipe(fs, hostdir + 'index_mbc.htm', mimetype, res);
 		return;
 	}
-
-	var dir = 'tmp/';
+    var dir="tmp/";
+	//var dir = 'F:/report_doc/outd/xml/';
 	
 //	var coolauth = require('./coolauth');
 //var auth_username = coolauth.auth(req, res);

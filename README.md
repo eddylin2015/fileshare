@@ -14,3 +14,9 @@ project.json
   }
 npm install
 node fileshare
+/
+project.json
+  "dependencies": {
+    "formidable": "1.1.1",
+  }
+node fileshare -e
