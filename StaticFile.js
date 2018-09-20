@@ -99,7 +99,10 @@ var Static_File = (function () {
     Static_File.uploadfile = function (dir, form, req, res) {
         form.multiples = true;
         form.uploadDir = "mytemp";
+		
         form.parse(req, function (err, fields, files) {
+			console.log(fields);
+			console.log(files);
             if (fields.logout == "logout") {
                 res.statusCode = 401;
                 res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
@@ -121,10 +124,12 @@ var Static_File = (function () {
                 'X-Content-Type-Options': 'nosniff'
             });
             var file_cnt = filelist.length;
-            var received_cnt = 0;
+            var received_cnt = 0;			
             var erro_cnt = 0;
+			console.log(filelist);
             filelist.forEach(function (file) {
-                console.log(file.path);
+                if(file != undefined ) {				console.log(file.path);
+				
                 fs.exists(file.path, function (exists) {
                     try {
                         res.write(file.name + "\n");
@@ -142,6 +147,7 @@ var Static_File = (function () {
                     if (erro_cnt + received_cnt == file_cnt)
                         res.end();
                 });
+				}
             });
         });
         return;
