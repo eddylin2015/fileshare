@@ -3,10 +3,10 @@ var fs = require('fs');
 var url = require('url');
 var util = require('util');
 var http = require('http');
+const path = require('path');
 var Static_File = (function () {
     function Static_File() {
     }
-
     Static_File._out = function (fs, filename, mimetype, res, jsonObject) {
         console.log('read static file' + filename);
         try {
@@ -16,7 +16,6 @@ var Static_File = (function () {
                         res.writeHead(404, { 'Content-Type': 'text/html' });
                         return res.end("404 Not Found");
                     }
-
                     res.writeHead(200, { 'Content-Type': mimetype });
                     let sdata = data.toString()
                     for (var prop in jsonObject) {
@@ -97,12 +96,13 @@ var Static_File = (function () {
         return;
     };
     Static_File.uploadfile = function (dir, form, req, res) {
-        form.multiples = true;
-        form.uploadDir = "mytemp";
-		
-        form.parse(req, function (err, fields, files) {
-			console.log(fields);
-			console.log(files);
+        form.parse(req, (err, fields, files) => {
+            if (err) {
+              console.error(err);
+              res.writeHead(err.httpCode || 400, { 'Content-Type': 'text/plain' });
+              res.end(String(err));
+              return;
+            }
             if (fields.logout == "logout") {
                 res.statusCode = 401;
                 res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
@@ -116,41 +116,21 @@ var Static_File = (function () {
             }
             else {
                 filelist.push(files.upload);
-            }
-            //res.writeHead(200, {'content-type': 'text/plain'});
+            }                     
             res.writeHead(200, {
                 'Content-Type': 'text/plain; charset=utf-8',
                 'Transfer-Encoding': 'chunked',
                 'X-Content-Type-Options': 'nosniff'
             });
-            var file_cnt = filelist.length;
-            var received_cnt = 0;			
-            var erro_cnt = 0;
-			console.log(filelist);
-            filelist.forEach(function (file) {
-                if(file != undefined ) {				console.log(file.path);
-				
-                fs.exists(file.path, function (exists) {
-                    try {
-                        res.write(file.name + "\n");
-                        res.flush();
-                        if (exists)
-                            fs.renameSync(file.path, dir + fields.title + "/" + file.name);
-                        console.log(exists ? "no." + (received_cnt++) + " / " + file_cnt + 'file' + file.name + ' sync it!' : file.name + 'no file!');
-                    }
-                    catch (err) {
-                        // Handle the error here.
-                        res.write("error:" + file.name);
-                        console.log(erro_cnt++);
-                        console.log(err);
-                    }
-                    if (erro_cnt + received_cnt == file_cnt)
-                        res.end();
-                });
-				}
-            });
-        });
-        return;
+            for(file of files.upload){
+                if(file) fs.promises.rename(file.path, path.join(form.uploadDir, file.name));
+                res.write(file.name + "\n");
+                //res.flush();
+            }
+            res.end();
+          });
+          return;		
+     
     };
     Static_File.uploadphp = function (dir, auth_username, req, res) {
         res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
@@ -218,6 +198,8 @@ var Static_File = (function () {
         req.write(postData);
         req.end();
     };
+    /////////////
+    
     ////////////////
     Static_File.postdata = function (postData, suburl, response) {
         var options = {

@@ -5,52 +5,22 @@ const 	https = require('http');
 const 	util = require('util');
 const 	fs = require("fs");
 const 	url = require('url');
-const 	staticfile = require('./StaticFile');
+const 	staticfile = require('./inc/StaticFile');
 const 	querystring = require('querystring');
-const  Multer  = require('multer');
-const mrs_docx_dir="d:/code/fileshare/tmp/";
-var storage = Multer.diskStorage({
-    destination: mrs_docx_dir,
-    filename: function (req, file, cb) {
-        var fileFormat = (file.originalname).split(".");
-        cb(null, file.originalname);
-    }
-});
-const multer = Multer({
-    storage: storage,  //limits: {fileSize: 15 * 1024 * 1024   }// no larger than 15mb
-});
-
+const formidable = require('formidable');
 const hostdir = "www/";  //www
-const port=81;
+const port=80;
 var server =null;
 console.log("Express component!");
 var express = require('express');
 var app = express();
 app.disable('x-powered-by');
-app.post('/upload',
-    multer.array('upload',16),         
-    function (req, res) {
-        if (!req.files) {
-            console.log("No file received");
-            return res.send({
-              success: false
-            });
-          } else {
-            console.log('file received');
-            return res.send({
-              success: true
-            })
-          }
-    });
 app.use( function (req, res) {	WebRouter(req, res);});
 server = https.createServer(app);
 
 server.listen(port, function () {
 	console.log("server running at https://IP_ADDRESS:",port)
 });
-
-
-
 
 function WebRouter(req, res) {
 	
@@ -74,7 +44,7 @@ function WebRouter(req, res) {
 		staticfile._pipe(fs, hostdir + 'index_mbc.htm', mimetype, res);
 		return;
 	}
-    var dir="tmp/";
+    var dir="www/";
 	//var dir = 'F:/report_doc/outd/xml/';
 	
 //	var coolauth = require('./coolauth');
@@ -97,10 +67,16 @@ function WebRouter(req, res) {
 	}
 	if (req.url.startsWith('/upload') && req.method.toLowerCase() == 'post')
 		{
-		   console.log("upload");
-		   try{
-			  var form = new formidable.IncomingForm();
-			  staticfile.uploadfile(dir, form, req, res);
+   		  let uploadDir=`www`;
+	      try{
+			let form = formidable(
+				{ multiples: true,
+				  uploadDir: uploadDir,
+				  keepExtensions: true,
+				  maxFileSize: 8000 * 1024 * 1024,
+				}
+			);
+			staticfile.uploadfile(dir, form, req, res);
 		   }catch(E){
 			  console.log(E);
 		   }
