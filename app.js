@@ -102,7 +102,7 @@ if (cluster.isMaster) {
       });*/
     }else {
       res.writeHead(200, { 'Content-Type': 'text/html' })
-      stream = fs.createReadStream(path.join(__dirname, 'template/index.html'));
+      stream = fs.createReadStream(path.join(__dirname, 'views/index.html'));
       stream.pipe(res);
       /*
       res.end(`<form action="" enctype="multipart/form-data" method="post">
