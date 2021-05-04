@@ -6,7 +6,7 @@ const staticfile = require('./inc/StaticFile');
 const formidable = require('formidable');
 const path = require('path');
 const hostdir = "www/";
-const port = 80;
+const port = 81;
 
 var express = require('express');
 var app = express();
