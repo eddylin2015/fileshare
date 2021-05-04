@@ -129,7 +129,6 @@ if (cluster.isMaster) {
     }
     else if (req.method == 'POST') {
       // parse a file upload
-      
       //if(req.url.indexOf('s=1')>-1){uploadDir=`xml/1`; }
     let form = formidable(
       { multiples: true,
@@ -168,7 +167,7 @@ if (cluster.isMaster) {
       });*/
     }else {
       res.writeHead(200, { 'Content-Type': 'text/html' })
-      stream = fs.createReadStream(path.join(__dirname, 'views/index.html'));
+      stream = fs.createReadStream(path.join(__dirname, 'views/html/index.html'));
       stream.pipe(res);
       /*
       res.end(`<form action="" enctype="multipart/form-data" method="post">

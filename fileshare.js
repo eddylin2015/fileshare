@@ -20,7 +20,7 @@ app.get('/', (req, res) => {
 });
 app.get('/form', (req, res) => {
 	let mimetype = "text/html";
-	staticfile._pipe(fs, 'views/fileshare_form.html', mimetype, res);
+	staticfile._pipe(fs, 'views/html/fileshare_form.html', mimetype, res);
 });
 app.post('/form', (req, res)=> {
 	let uploadDir = `www`;
