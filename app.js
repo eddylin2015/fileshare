@@ -96,24 +96,42 @@ if (cluster.isMaster) {
   // Worker 进程有一个http服务器
   http.Server((req, res) => {
     const { headers, method, url } = req;
+    let subpath=""
+    if(url[url.length-1]=="/") {subpath=url}else{let l_ =url.split("/");for(i=0;i<l_.length-1;i++){subpath+=l_[i]+"/"} }
+    console.log(method, url,subpath)
     var coolauth = require('./inc/coolauth');
 	  var auth_username = coolauth.auth(req, res);
 	  if (auth_username == null) return;
     let uploadDir=`www`;
-    if(req.url.indexOf('/dir')>-1 || req.url.indexOf('/ls')>-1 )
+    let curr_path=uploadDir+subpath;
+    if(req.url.indexOf('/makedir')>-1 )
+    {
+      var query = url_utils.parse(req.url, true).query;
+      if (typeof query.dirname != 'undefined') {
+          var dir = curr_path +"/"+ query.dirname
+          if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+          }
+      }
+      res.writeHead(301, { Location: `${subpath}` });
+      res.end();
+      return;      
+    }else if(req.url.indexOf('/dir')>-1 || req.url.indexOf('/ls')>-1 )
     {
       res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
-      var files = fs.readdirSync(uploadDir);
+      var files = fs.readdirSync(curr_path);
+      //res.write("<a href='/Up_Step'>..</a><br>");
       files.forEach(function (file) {
-        let file_stat=fs.statSync(uploadDir +"/"+ file);
+        let file_stat=fs.statSync(curr_path +"/"+ file);
           if (file_stat.isDirectory()) {
               // filelist = walkSync(dir + file + '/', filelist);
+              res.write(`<Div>Dir: <a href=${subpath}` + encodeURI(file) + "/>" + file + `</div> `);
           }
           else {
               //filelist.push(file);
-              res.write("<a href=/down?file=" + encodeURI(file) + ">" + file + "</a>");
+              if(subpath=="/") subpath=""
+              res.write(`<a href=${subpath}/down?file=` + encodeURI(file) + ">" + file + "</a>");
               res.write(`(${(file_stat.size/1000000).toFixed(2)} m )<br> `);
-
           }
       });
       res.end("<div> down speend 8m/sec.</div>");
@@ -123,7 +141,7 @@ if (cluster.isMaster) {
     {
       var query = url_utils.parse(req.url, true).query;
       if (typeof query.file != 'undefined') {
-          down_pip_file(uploadDir +"/"+ query.file,res)
+          down_pip_file(curr_path +"/"+ query.file,res)
       }
       return;
     }
@@ -132,7 +150,7 @@ if (cluster.isMaster) {
       //if(req.url.indexOf('s=1')>-1){uploadDir=`xml/1`; }
     let form = formidable(
       { multiples: true,
-        uploadDir: uploadDir,
+        uploadDir: curr_path,
         keepExtensions: true,
         maxFileSize: 8000 * 1024 * 1024,
       }
