@@ -128,6 +128,7 @@ if (cluster.isMaster) {
               res.write(`<img src=${subpath}/down?file=` + encodeURI(file) + ">" + file + "<br>");
           }
       });
+      res.end();
       return;
     }else if(req.url.indexOf('/dir')>-1 || req.url.indexOf('/ls')>-1 )
     {
