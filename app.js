@@ -116,6 +116,19 @@ if (cluster.isMaster) {
       res.writeHead(301, { Location: `${subpath}` });
       res.end();
       return;      
+    }else if(req.url.indexOf('/pic')>-1 )
+    {
+      res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
+      var files = fs.readdirSync(curr_path);
+      //res.write("<a href='/Up_Step'>..</a><br>");
+      files.forEach(function (file) {
+        let file_stat=fs.statSync(curr_path +"/"+ file);
+          if (file.toUpperCase().indexOf(".JPG")>-1) {
+              if(subpath=="/") subpath=""
+              res.write(`<img src=${subpath}/down?file=` + encodeURI(file) + ">" + file + "<br>");
+          }
+      });
+      return;
     }else if(req.url.indexOf('/dir')>-1 || req.url.indexOf('/ls')>-1 )
     {
       res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
