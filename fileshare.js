@@ -6,12 +6,58 @@ const staticfile = require('./inc/StaticFile');
 const formidable = require('formidable');
 const path = require('path');
 const hostdir = "www/";
-const port = 80;
+const port = 81;
 
-https.Server((req, res) => {
-	WebRouter(req, res)
-	}).listen(port);
-	
+var express = require('express');
+var app = express();
+//app.disable('x-powered-by');
+//app.disable('etag');
+//app.set('views', path.join(__dirname, 'views'));
+//app.set('view engine', 'pug');
+app.get('/', (req, res) => {
+	console.log('xxx')
+	res.redirect("/form")
+});
+app.get('/form', (req, res) => {
+	let mimetype = "text/html";
+	staticfile._pipe(fs, 'views/html/fileshare_form.html', mimetype, res);
+});
+app.post('/form', (req, res)=> {
+	let uploadDir = `www`;
+	//if(req.url.indexOf('s=1')>-1){uploadDir=`xml/1`; }
+	let form = formidable(
+		{
+			multiples: true,
+			uploadDir: uploadDir,
+			keepExtensions: true,
+			maxFileSize: 8000 * 1024 * 1024,
+		}
+	);
+	form.parse(req, (err, fields, files) => {
+		if (err) {
+			console.error(err);
+			res.writeHead(err.httpCode || 400, { 'Content-Type': 'text/plain' });
+			res.end(String(err));
+			return;
+		}
+		let file = files.file1
+		if (file) fs.promises.rename(file.path, path.join(form.uploadDir, file.name));
+		res.writeHead(200, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ fields, files }, null, 2));
+	});
+});
+
+app.use(function (req, res) { WebRouter(req, res); });
+// Basic 404 handler
+//app.use((req, res) => {	res.status(404).send('Not Found');  });
+ 
+app.listen(port, () => {
+	staticfile.hostIP()	;console.log(`Example app listening at http://localhost:${port}`)
+  })
+//const server = https.createServer(app);
+
+//server.listen(port, function () {	staticfile.hostIP()	;console.log("server running at https://IP_ADDRESS:", port)});
+
 function WebRouter(req, res) {
 	let q = url.parse(req.url, true);
 	let filename = "." + q.pathname;
@@ -24,14 +70,14 @@ function WebRouter(req, res) {
 		filename = filename.replace(":", "");
 		filename = filename.replace("//", "/");
 		staticfile._out(fs, hostdir + filename, mimetype, res);
-		return true;
+		return;
 	}
 	console.log(req.headers);
 	console.log(req.connection.remoteAddress);
 	if (req.url.startsWith('/mbc')) {
 		mimetype = "text/html";
 		staticfile._pipe(fs, hostdir + 'index_mbc.htm', mimetype, res);
-		return true;
+		return;
 	}
 	var dir = "www/";
 	//var coolauth = require('./coolauth');
@@ -41,7 +87,7 @@ function WebRouter(req, res) {
 
 	if (req.url.startsWith('/down')) {
 		staticfile.downfile(dir, req, res);
-		return true;
+		return;
 	}
 	if (req.url.startsWith('/uploadphp')) {
 		try {
@@ -49,7 +95,7 @@ function WebRouter(req, res) {
 		} catch (E) {
 			console.log(E);
 		}
-		return true;
+		return;
 	}
 	if (req.url.startsWith('/upload') && req.method.toLowerCase() == 'post') {
 		let uploadDir = `www`;
@@ -66,7 +112,7 @@ function WebRouter(req, res) {
 		} catch (E) {
 			console.log(E);
 		}
-		return true;
+		return;
 	}
 	res.writeHead(301, { Location: '/uploadphp' });
 	res.end();

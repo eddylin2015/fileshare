@@ -66,7 +66,10 @@ function mimetype(filename) {
   }
   return "NULL";
 };
-
+////
+//const server = https.createServer(app);
+//server.listen(port, function () {	staticfile.hostIP()	;console.log("server running at https://IP_ADDRESS:", port)});
+////
 if (cluster.isMaster) {
   // 跟踪 http 请求
   let numReqs = 0;
