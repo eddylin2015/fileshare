@@ -123,7 +123,7 @@ if (cluster.isMaster) {
       //res.write("<a href='/Up_Step'>..</a><br>");
       files.forEach(function (file) {
         let file_stat=fs.statSync(curr_path +"/"+ file);
-          if (file.toUpperCase().indexOf(".JPG")>-1) {
+          if (file.toUpperCase().indexOf(".JPG")>-1||file.toUpperCase().indexOf(".PNG")>-1||file.toUpperCase().indexOf(".GIF")>-1) {
               if(subpath=="/") subpath=""
               res.write(`<img src=${subpath}/down?file=` + encodeURI(file) + ">" + file + "<br>");
           }
@@ -138,7 +138,7 @@ if (cluster.isMaster) {
         let file_stat=fs.statSync(curr_path +"/"+ file);
           if (file_stat.isDirectory()) {
               // filelist = walkSync(dir + file + '/', filelist);
-              res.write(`<Div>Dir: <a href=${subpath}` + encodeURI(file) + "/>" + file + `</div> `);
+              res.write(`<Div>Dir: <a href=${subpath}` + encodeURI(file) + "/>" + file + `</a></div> `);
           }
           else {
               //filelist.push(file);
