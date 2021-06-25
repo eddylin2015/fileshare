@@ -1,0 +1,29 @@
+extends ./base.pug
+block content
+  style.
+    .wrapper {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 10px;
+    }
+    .wrapper>div {
+      font-size:12px;
+    }
+
+  table(style="width:100%") 
+    tr 
+      td= `班別:${classno}`
+      td= `班主任:`
+      td(style='width:240px')
+        span= `[${sdate}][${stime}]`
+        span#UPLOAD [UPLOAD]
+  div.wrapper
+    each ite in datas 
+      div
+        img(src=`/internal/studentPhoto_ufile/down?file=${ite.code}.JPG`,style="width:100px")
+        br
+        span= `(${ite.seat}) ${ite.SEX} ${ite.name_c}`
+        br
+        span= `${ite.code} `
+        br
+        span= `${ite.name_p} `

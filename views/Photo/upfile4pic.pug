@@ -1,8 +1,5 @@
-
 extends ./base.pug
 block content
-  style.
-    div.container{ margin:0px; }
   script.
     let code=!{code};
     function _(el) {
@@ -10,22 +7,22 @@ block content
     }
     function chechfile(code,file)
     {
-        let flag=false
-        console.log(file.name,file.size,file.type);
-        var mimetype_obj = {'.jpg': 'image/jpeg','.png': 'image/png','.gif': 'image/gif','.pdf':'application/pdf' };
-        for(x in mimetype_obj){
-          if(file.type==mimetype_obj[x]) flag=true 
+      return true;
+      let flag=false
+      console.log(file.name,file.size,file.type);
+      var mimetype_obj = {'.jpg': 'image/jpeg','.png': 'image/png','.gif': 'image/gif','.pdf':'application/pdf' };
+      for(x in mimetype_obj){
+        if(file.type==mimetype_obj[x]) flag=true 
+      }
+      if(flag&& code.length>0){
+        flag=false
+        for(c of code){
+          if(file.name.indexOf(c)>-1){flag=true; break;}
         }
-        if(flag && code.length>0){
-          flag=false
-          for(c of code){
-            if(file.name.indexOf(c)>-1){flag=true; break;}
-          }
-        }
-        if(flag && file.size < 3*1024*1024) return true;
-        return false;
+      }
+      if(flag && file.size < 3*1024*1024) return true;
+      return flag
     }
-    
     var async_files_id=0;
     function uploadFile(fileid=0) {
       async_files_id= fileid
@@ -41,7 +38,8 @@ block content
           uploadFile(async_files_id)
           return;
         }         
-        //var file = _("file1").files[0];console.log(file.name+" | "+file.size+" | "+file.type);
+        //var file = _("file1").files[0];
+        // alert(file.name+" | "+file.size+" | "+file.type);
         var formdata = new FormData();
         formdata.append("file1", file);
         var ajax = new XMLHttpRequest();
@@ -114,7 +112,7 @@ block content
         console.log(file);
         flag=chechfile(code,file)
         console.log("a",flag)
-        if(!flag || file.size > 3*1024*1024){
+        if(!flag){
           _("status").innerHTML = "Upload Failed";
           filepicker_files_id--
           filepickeruploadFile(filepicker_files,filepicker_files_id)
@@ -146,7 +144,6 @@ block content
       for (let i=0; i<filepicker_files.length; i++) {
         let item = document.createElement("li");
         item.innerHTML = filepicker_files[i].webkitRelativePath;
-
         if(item.innerHTML.indexOf("~$")>-1) continue;
         //output.appendChild(item);
       };

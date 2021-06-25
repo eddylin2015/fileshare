@@ -1,0 +1,103 @@
+doctype html
+- var Data= [  ];
+html
+  head
+    title 照片
+    link(rel="icon" href="/favicon.ico")
+    meta(charset='utf-8')
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+    link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
+    script(src='/javascripts/jquery.js')
+    script(src='/javascripts/bootstrap.js')
+  body
+    .navbar.navbar-default
+      .container
+        .navbar-header
+          .navbar-brand 升留記登
+        ul.nav.navbar-nav
+          li          
+            a(href="/internal/") 
+              span(class="glyphicon") &#xe021
+
+          li(class="dropdown")
+            a( class="dropdown-toggle", data-toggle="dropdown", href="#" )
+              span 升班管理
+              span(class="caret")
+                ul(class="dropdown-menu")
+                  li
+                    a(href="#") (1)登記升留畢退
+                  li
+                    a(href="#") (2)設定新學年任教班別
+                  li
+                    a(href="#") (3)登記新學年排班,座號
+          -let flag=profile && profile.id && "userid".indexOf(profile.id)>-1 
+          if(profile && flag)
+            li(class="dropdown")
+              a( class="dropdown-toggle", data-toggle="dropdown", href="#" )
+                span 行政管理
+                span(class="caret")
+                  ul(class="dropdown-menu")
+                    li
+                      a(href="/internal/studentPhoto_ufile/upfile") (1)上載圖片(按ID_NO)
+                    li
+                      a(href="/internal/studentPhoto_tfile/upfile") (2)上載圖片Temp(按班)
+          li(class="dropdown")
+            a( class="dropdown-toggle", data-toggle="dropdown", href="#" )
+              span 檢視listView
+              span(class="caret")
+                ul(class="dropdown-menu")
+                  li
+                    a(href="/internal/studentPhoto/listView?spk=k") (1)按班檢視_K
+                  li
+                    a(href="/internal/studentPhoto/listView?spk=p") (1)按班檢視_P
+                  li
+                    a(href="/internal/studentPhoto/listView?spk=sg") (1)按班檢視_SG
+                  li
+                    a(href="/internal/studentPhoto/listView?spk=sc") (1)按班檢視_SC
+                  li
+                    a(href="/internal/studentPhoto/NlistView?spk=k") (2)升班檢視_K
+                  li
+                    a(href="/internal/studentPhoto/NlistView?spk=p") (2)升班檢視_P
+                  li
+                    a(href="/internal/studentPhoto/NlistView?spk=sg") (2)升班檢視_SG
+                  li
+                    a(href="/internal/studentPhoto/NlistView?spk=sc") (2)升班檢視_SC
+          li          
+            a(href="/internal/studentPhoto_tview/upfile") 
+              span(class="glyphicon") 暫存圖片
+          li          
+            a(href="/internal/studentPhoto_ufile/myclass") 
+              span(class="glyphicon") 補登班圖片
+
+          //li          
+            a(href="/internal/execudeptStdImage/") 
+              span(class="glyphicon") listView
+          //li          
+            a(href="/internal/execudeptStdImage/photoView") 
+              span(class="glyphicon") photoView
+
+          //li
+            a(href=`/internal/execudeptStdImage/photoAddition`)   
+              span(class="glyphicon") 補登    
+              
+          //li
+            a(href=`//192.168.101.250/a/MARKUP/studcard/ls_pic.php?K=${encip}`,target="iframe_a") 
+              span(class="glyphicon") 檢視
+          //li
+             a(href=`//192.168.101.250/a/MARKUP/studcard/ls_pic_up.php?K=${encip}`,target="iframe_a") 
+              span(class="glyphicon") 補登
+          //li
+            a(href=`http://192.168.101.250:8088/upfileform?K=${encip}`,target="iframe_a") 
+              span(class="glyphicon") upload files    
+        p.navbar-text.navbar-right
+          if profile
+            if profile.image
+              img.img-circle(src=profile.image, width=24)
+            span #{profile.displayName} &nbsp;
+              a(href='/logout') (logout)
+          else
+            a(href='/login') Login
+  
+.container
+  
+  block content

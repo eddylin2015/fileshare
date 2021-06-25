@@ -10,14 +10,20 @@ const port = 81;
 
 var express = require('express');
 var app = express();
-//app.disable('x-powered-by');
-//app.disable('etag');
-//app.set('views', path.join(__dirname, 'views'));
-//app.set('view engine', 'pug');
+app.use(express.static(path.join(__dirname, 'public')));
+app.disable('x-powered-by');
+app.disable('etag');
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+app.use('/internal/photo', require('./routers/photo/api'));
 app.get('/', (req, res) => {
-	console.log('xxx')
 	res.redirect("/form")
 });
+app.get('/mathkeyboard', (req, res) => {
+	let mimetype = "text/html";
+	staticfile._pipe(fs, 'views/html/mathkeyboard.html', mimetype, res);
+});
+
 app.get('/form', (req, res) => {
 	let mimetype = "text/html";
 	staticfile._pipe(fs, 'views/html/fileshare_form.html', mimetype, res);
@@ -47,73 +53,13 @@ app.post('/form', (req, res)=> {
 	});
 });
 
-app.use(function (req, res) { WebRouter(req, res); });
-// Basic 404 handler
+//app.use(function (req, res) { WebRouter(req, res); });
 //app.use((req, res) => {	res.status(404).send('Not Found');  });
  
 app.listen(port, () => {
 	staticfile.hostIP()	;console.log(`Example app listening at http://localhost:${port}`)
   })
+
+
 //const server = https.createServer(app);
-
 //server.listen(port, function () {	staticfile.hostIP()	;console.log("server running at https://IP_ADDRESS:", port)});
-
-function WebRouter(req, res) {
-	let q = url.parse(req.url, true);
-	let filename = "." + q.pathname;
-	filename = filename.replace("./", "");
-	console.log("url_file_name:" + filename);
-	let mimetype = "text/html";
-	mimetype = staticfile.mimetype(filename);
-	if (mimetype != 'NULL') {
-		filename = filename.replace("..", "");
-		filename = filename.replace(":", "");
-		filename = filename.replace("//", "/");
-		staticfile._out(fs, hostdir + filename, mimetype, res);
-		return;
-	}
-	console.log(req.headers);
-	console.log(req.connection.remoteAddress);
-	if (req.url.startsWith('/mbc')) {
-		mimetype = "text/html";
-		staticfile._pipe(fs, hostdir + 'index_mbc.htm', mimetype, res);
-		return;
-	}
-	var dir = "www/";
-	//var coolauth = require('./coolauth');
-	//var auth_username = coolauth.auth(req, res);
-	//if (auth_username == null) return;
-	var auth_username = "abc";
-
-	if (req.url.startsWith('/down')) {
-		staticfile.downfile(dir, req, res);
-		return;
-	}
-	if (req.url.startsWith('/uploadphp')) {
-		try {
-			staticfile.uploadphp(dir, auth_username, req, res);
-		} catch (E) {
-			console.log(E);
-		}
-		return;
-	}
-	if (req.url.startsWith('/upload') && req.method.toLowerCase() == 'post') {
-		let uploadDir = `www`;
-		try {
-			let form = formidable(
-				{
-					multiples: true,
-					uploadDir: uploadDir,
-					keepExtensions: true,
-					maxFileSize: 8000 * 1024 * 1024,
-				}
-			);
-			staticfile.uploadfile(dir, form, req, res);
-		} catch (E) {
-			console.log(E);
-		}
-		return;
-	}
-	res.writeHead(301, { Location: '/uploadphp' });
-	res.end();
-}

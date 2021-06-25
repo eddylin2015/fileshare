@@ -23,8 +23,9 @@
   },
   "homepage": "https://github.com/eddylin2015/fileshare#readme",
   "dependencies": {
-    "formidable": "^1.2.1",
     "express": "^4.16.0",
-    "multer": "^1.3.0"
+    "formidable": "^1.2.1",
+    "multer": "^1.3.0",
+    "pug": "^3.0.2"
   }
 }
