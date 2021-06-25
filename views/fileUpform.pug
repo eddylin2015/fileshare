@@ -4,7 +4,7 @@ block content
   style.
     div.container{ margin:0px; }
   script.
-    let code=!{code};
+    let code=[];
     function _(el) {
       return document.getElementById(el);
     }
@@ -25,7 +25,7 @@ block content
         if(flag && file.size < 3*1024*1024) return true;
         return false;
     }
-    
+
     var async_files_id=0;
     function uploadFile(fileid=0) {
       async_files_id= fileid
@@ -114,7 +114,7 @@ block content
         console.log(file);
         flag=chechfile(code,file)
         console.log("a",flag)
-        if(!flag || file.size > 3*1024*1024){
+        if(!flag ){
           _("status").innerHTML = "Upload Failed";
           filepicker_files_id--
           filepickeruploadFile(filepicker_files,filepicker_files_id)
