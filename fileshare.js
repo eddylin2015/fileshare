@@ -1,7 +1,5 @@
 'use strict'
-const https = require('http');
 const fs = require("fs");
-const url = require('url');
 const staticfile = require('./inc/StaticFile');
 const formidable = require('formidable');
 const path = require('path');
@@ -28,9 +26,8 @@ app.get('/form', (req, res) => {
 	let mimetype = "text/html";
 	staticfile._pipe(fs, 'views/html/fileshare_form.html', mimetype, res);
 });
-app.post('/form', (req, res)=> {
+app.post('/form', (req, res) => {
 	let uploadDir = `www`;
-	//if(req.url.indexOf('s=1')>-1){uploadDir=`xml/1`; }
 	let form = formidable(
 		{
 			multiples: true,
@@ -55,11 +52,10 @@ app.post('/form', (req, res)=> {
 
 //app.use(function (req, res) { WebRouter(req, res); });
 //app.use((req, res) => {	res.status(404).send('Not Found');  });
- 
-app.listen(port, () => {
-	staticfile.hostIP()	;console.log(`Example app listening at http://localhost:${port}`)
-  })
 
+app.listen(port, () => {
+	staticfile.hostIP(); console.log(`Example app listening at http://localhost:${port}`)
+})
 
 //const server = https.createServer(app);
 //server.listen(port, function () {	staticfile.hostIP()	;console.log("server running at https://IP_ADDRESS:", port)});

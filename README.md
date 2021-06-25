@@ -20,3 +20,6 @@ project.json
     "formidable": "1.1.1",
   }
 node fileshare -e
+
+# referenc  
+// http://www.developphp.com/video/JavaScript/File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP

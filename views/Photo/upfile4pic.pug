@@ -5,11 +5,12 @@ block content
     function _(el) {
       return document.getElementById(el);
     }
-    function chechfile(code,file)
+    function checkfile(code,file)
     {
-      return true;
-      let flag=false
       console.log(file.name,file.size,file.type);
+      return true; //沒有限制
+
+      let flag=false
       var mimetype_obj = {'.jpg': 'image/jpeg','.png': 'image/png','.gif': 'image/gif','.pdf':'application/pdf' };
       for(x in mimetype_obj){
         if(file.type==mimetype_obj[x]) flag=true 
@@ -21,7 +22,7 @@ block content
         }
       }
       if(flag && file.size < 3*1024*1024) return true;
-      return flag
+      return false;
     }
     var async_files_id=0;
     function uploadFile(fileid=0) {
@@ -31,15 +32,13 @@ block content
       if(_("file1").files.length> async_files_id) 
       { 
         let file=_("file1").files[async_files_id]
-        let flag=chechfile(code,file)
+        let flag=checkfile(code,file)
         if(!flag){
           _("status").innerHTML = "Upload Failed";
           async_files_id++
           uploadFile(async_files_id)
           return;
         }         
-        //var file = _("file1").files[0];
-        // alert(file.name+" | "+file.size+" | "+file.type);
         var formdata = new FormData();
         formdata.append("file1", file);
         var ajax = new XMLHttpRequest();
@@ -47,8 +46,7 @@ block content
         ajax.addEventListener("load", completeHandler, false);
         ajax.addEventListener("error", errorHandler, false);
         ajax.addEventListener("abort", abortHandler, false);
-        ajax.open("POST", "file_upload_parser.php"); // http://www.developphp.com/video/JavaScript/File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP
-        //use file_upload_parser.php from above url
+        ajax.open("POST", "file_upload_parser.php"); 
         ajax.send(formdata);
       }
     }
@@ -65,12 +63,8 @@ block content
       async_files_id++
       uploadFile(async_files_id)
     }
-    function errorHandler(event) {
-      _("status").innerHTML = "Upload Failed";
-    }
-    function abortHandler(event) {
-      _("status").innerHTML = "Upload Aborted";
-    }
+    function errorHandler(event) {  _("status").innerHTML = "Upload Failed";  }
+    function abortHandler(event) {  _("status").innerHTML = "Upload Aborted"; }
   table
     tr
       td(style="vertical-align: top;text-align: left;")
@@ -108,10 +102,7 @@ block content
         console.log(i)
         if(i<=0) return null;
         let file=files[i-1]
-
-        console.log(file);
-        flag=chechfile(code,file)
-        console.log("a",flag)
+        flag=checkfile(code,file)
         if(!flag){
           _("status").innerHTML = "Upload Failed";
           filepicker_files_id--
@@ -126,8 +117,7 @@ block content
         ajax.addEventListener("load", filepickercompleteHandler, false);
         ajax.addEventListener("error", errorHandler, false);
         ajax.addEventListener("abort", abortHandler, false);
-        ajax.open("POST", "file_upload_parser.php"); // http://www.developphp.com/video/JavaScript/File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP
-        //use file_upload_parser.php from above url
+        ajax.open("POST", "file_upload_parser.php"); 
         ajax.send(formdata);      
     }
     function filepickercompleteHandler(event) {

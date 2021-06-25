@@ -1,11 +1,9 @@
 'use strict';
-const zlib = require('zlib');
 var fs = require('fs');
 const formidable = require('formidable');
 const path = require('path');
-var fs = require("fs");
 const url_utils = require('url');
-
+//express pug formidable
 //cont opt={ uploadDir : config.get("StudentPhotoTmpDir"),  title: "TempDir"}
 
 function down_pip_file(filename, res,uploadDir="") {
@@ -117,10 +115,6 @@ function WebRouter(req, res, opt, code = []) {
         return;
     }
     else if (req.method == 'POST') {
-        //&ctx=20210607110301&crypto=18292930004302
-        //console.log(req.url)
-        //parse a file upload
-        //if(req.url.indexOf('s=1')>-1){uploadDir=`xml/1`; }
         curr_path = decodeURI(curr_path).replace("//", "/")
         let form = formidable(
             {
