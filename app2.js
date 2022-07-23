@@ -114,6 +114,7 @@ app.use(function (req, res, next) {
         let end = Math.min(start + CHUNK_SIZE, videoSize - 1);
         if(parts.length>1 && parts[1]!=="" ){
           end = Number(parts[1].replace(/\D/g, ""));
+          if(end>1) {end = Math.min(start + CHUNK_SIZE, videoSize - 1);}
         }
         //Math.min(start + CHUNK_SIZE, videoSize - 1);
         const contentLength = end - start + 1;
