@@ -90,6 +90,71 @@ app.use(function (req, res, next) {
         return;
 
     } 
+    else if(req.url.indexOf('/playSafariVideo?file=') > -1){
+        let videoPath=null;
+        var query = url_utils.parse(req.url, true).query;
+        if (typeof query.file != 'undefined') {
+            videoPath =curr_path + "/" + query.file 
+        }else{
+            return;
+        }
+        // Ensure there is a range given for the video
+        let range = req.headers.range;
+        if(!range){range="bytes=0-"}
+        console.log("in",range)
+        // get video stats (about 61MB)
+        let videoSize = fs.statSync(videoPath).size;
+
+        // Parse Range
+        // Example: "bytes=32324-"
+        const CHUNK_SIZE = 10 ** 6; // 1MB
+        const parts = range.split("-");
+        console.log(parts)
+        const start = Number(parts[0].replace(/\D/g, ""));
+        let end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+        if(parts.length>1 && parts[1]!=="" ){
+          end = Number(parts[1].replace(/\D/g, ""));
+        }
+        //Math.min(start + CHUNK_SIZE, videoSize - 1);
+        const contentLength = end - start + 1;
+        // get video stats (about 61MB)
+        if(range=="bytes=0-1"){
+            console.log("0-1")
+
+            res.writeHead(206, {
+                "Connection":"keep-alive",
+                'Accept-Ranges': 'bytes',
+                'Keep-Alive': 'timeout=2, max=100',
+                'Content-Type': "video/mp4",
+                'Content-Range': 'bytes 0-1/' + videoSize,
+                "Content-Length": 2,
+              });
+              const fileStream = fs.createReadStream(videoPath, {start,end});
+              fileStream.on("error", error => {
+                  console.log(`Error reading file ${videoPath}.`);
+                  console.log(error);
+                  res.sendStatus(500);
+              });
+              fileStream.pipe(res);         
+        }else{        
+        // Listing 6.
+        //res.statusCode = start !== undefined || end !== undefined ? 206 : 200;
+        res.statusCode = 206;
+        res.setHeader("content-type", "video/mp4");
+        res.setHeader("content-length", contentLength);
+        res.setHeader("content-range", `bytes ${start}-${end}/${videoSize}`);
+        res.setHeader("accept-ranges", "bytes");
+        console.log(`bytes ${start}-${end}/${videoSize}`)  
+        // Listing 7.
+        const fileStream = fs.createReadStream(videoPath, {start,end});
+        fileStream.on("error", error => {
+            console.log(`Error reading file ${videoPath}.`);
+            console.log(error);
+            res.sendStatus(500);
+        });
+        fileStream.pipe(res);         
+       }
+    } 
     else if(req.url.indexOf('/playvideo?file=') > -1){
         let videoPath=null;
         var query = url_utils.parse(req.url, true).query;
@@ -114,7 +179,10 @@ app.use(function (req, res, next) {
       
         // Create headers
         const contentLength = end - start + 1;
-        const headers = {
+
+        console.log(`bytes ${start}-${end}/${videoSize}`,contentLength)
+        let headers = {
+          "Connection":"keep-alive",
           "Content-Range": `bytes ${start}-${end}/${videoSize}`,
           "Accept-Ranges": "bytes",
           "Content-Length": contentLength,
@@ -357,7 +425,9 @@ app.use(function (req, res, next) {
                 }
                 else if(file.indexOf(".mp4")>-1||file.indexOf(".mp4")>-1){
                     let href_video=`${req.baseUrl}${encodeURI(subpath)}/playvideo?file=` + encodeURI(file)
+                    let href_ios_video=`${req.baseUrl}${encodeURI(subpath)}/playSafariVideo?file=` + encodeURI(file)
                     file_list.push(`<div>file:<a href=${href_down}>` + file + `</a>
+                    <a href=${href_ios_video}><button>i</button></a>
                     <a href=${href_video}><button>V</button></a>    (${(file_stat.size / 1000000).toFixed(2)} m )</div>`);
                 }
                 else
