@@ -57,8 +57,9 @@ typings/
 # dotenv environment variables file
 .env
 
-
+*.7z
 tmp/
 mytemp/
 www/
 doc/
+public/monaco-editor/

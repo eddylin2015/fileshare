@@ -1,0 +1,194 @@
+<html>
+<head>
+  <title>StafInfo</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  script.
+    function IsSafari() {
+      var is_safari = navigator.userAgent.toLowerCase().indexOf('safari/') > -1;
+      return is_safari;
+    }
+    //let code=JSON.parse(!{code});
+    let code=[];
+    function chechfile(code,file)
+    {
+      if(file.toString().indexOf(".git/")>-1) return false;
+      if(code.length==0) return true;
+      let flag=false
+      console.log(file.name,file.size,file.type);
+      var mimetype_obj = {'.jpg': 'image/jpeg','.png': 'image/png','.gif': 'image/gif','.pdf':'application/pdf' };
+      for(x in mimetype_obj){
+        if(file.type==mimetype_obj[x]) flag=true 
+      }
+      if(flag&& code.length>0){
+        flag=false
+        for(c of code){
+          if(file.name.indexOf(c)>-1){
+            flag=true; 
+            break;
+          }
+        }
+      }
+      return flag
+    }
+    function _(el) {  return document.getElementById(el);  }
+    var file_id=0;
+    function uploadFile(fileid=0) {
+      file_id= fileid
+      console.log(_("file1").files.length)
+      //for (file of _("file1").files) {   //async
+      if(_("file1").files.length> file_id) //one by one
+      { 
+        file=_("file1").files[file_id]
+        //let flag=chechfile(code,file)    //checkfile
+        //if(!flag || (flag && file.size > 3*1024*1024)){
+        //  _("status").innerHTML = "Upload Failed";
+        //  file_id++
+        //  uploadFile(file_id)
+        //  return;
+        //}         
+        //var file = _("file1").files[0];console.log(file.name+" | "+file.size+" | "+file.type);
+        var formdata = new FormData();
+        formdata.append("file1", file);
+        var ajax = new XMLHttpRequest();
+        ajax.upload.addEventListener("progress", progressHandler, false);
+        ajax.addEventListener("load", completeHandler, false);
+        ajax.addEventListener("error", errorHandler, false);
+        ajax.addEventListener("abort", abortHandler, false);
+        ajax.open("POST", "file_upload_parser.php"); // http://www.developphp.com/video/JavaScript/File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP
+        //use file_upload_parser.php from above url
+        ajax.send(formdata);
+      }
+    }
+    function progressHandler(event) {
+      _("loaded_n_total").innerHTML = "Uploaded " + event.loaded + " bytes of " + event.total;
+      var percent = (event.loaded / event.total) * 100;
+      _("progressBar").value = Math.round(percent);
+      _("status").innerHTML = Math.round(percent) + "% uploaded... please wait";
+    }
+    function completeHandler(event) {
+      _("status").innerHTML = event.target.responseText;
+      let obj=JSON.parse(event.target.responseText)
+      console.log(obj)
+      let file_name= obj.files.file1.originalFilename
+      if(obj.files.file1.name) file_name=obj.files.file1.name
+      _('status_file_list').innerHTML += file_name+'<br>';
+      _("progressBar").value = 0; //wil clear progress bar after successful upload
+      file_id++
+      uploadFile(file_id)
+    }
+    function errorHandler(event) {
+      _("status").innerHTML = "Upload Failed";
+    }
+    function abortHandler(event) {
+      _("status").innerHTML = "Upload Aborted";
+    }
+</head>
+style.
+  .grid-container {
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: auto auto;
+    background-color: #2196F3;
+    padding: 10px;
+  }
+  .grid-item {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    font-size: 30px;
+    /*text-align: center;*/
+  }
+<body>
+div.grid-container
+  div.grid-item(style="vertical-align: top;text-align: left;")
+    a(href="pic")
+      button 
+        h4 PIC List 
+    a(href="pic10")
+      button 
+        h4 PIC10 List 
+    h2 HTML5 File Upload</h2>
+    h4 目錄(構建中)
+    input(type="file", id="filepicker", name="fileList", webkitdirectory, multiple)
+    hr 
+    h4 檔案  
+    <form id="upload_form" enctype="multipart/form-data" method="post">
+      <input type="file" name="file1" id="file1" onchange="uploadFile()" multiple="multiple"><br>
+      <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
+      <h3 id="status"></h3>
+      <p id="loaded_n_total"></p>
+    </form>
+    div#status_file_list
+    ul#listing
+
+  div.grid-item(style="vertical-align: top;text-align: left;")
+    each _f in file_list
+      div !{_f}
+
+  div.grid-item(style="vertical-align: top;text-align: left;")
+    div help:
+    div /dir
+    div /pic
+    div /makedir?dirname=folder_name
+
+script.
+    filepicker_file_id=0
+    filepicker_files=null;
+    function filepickeruploadFile(files,i){
+        console.log(i)
+        if(i<=0) return null;
+        let file=files[i-1]
+
+        console.log(file);
+        flag=chechfile(code,file)
+        console.log("a",flag)
+        if(!flag || (flag && file.size > 3*1024*1024)){
+          _("status").innerHTML = "Upload Failed";
+          filepicker_file_id--
+          filepickeruploadFile(filepicker_files,filepicker_file_id)
+          return;
+        }        
+
+        var formdata = new FormData();
+        formdata.append("file1", file);
+        var ajax = new XMLHttpRequest();
+        ajax.upload.addEventListener("progress", progressHandler, false);
+        ajax.addEventListener("load", filepickercompleteHandler, false);
+        ajax.addEventListener("error", errorHandler, false);
+        ajax.addEventListener("abort", abortHandler, false);
+        ajax.open("POST", "file_upload_parser.php"); // http://www.developphp.com/video/JavaScript/File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP
+        //use file_upload_parser.php from above url
+        ajax.send(formdata);      
+    }
+    function filepickercompleteHandler(event) {
+        _("status").innerHTML = event.target.responseText;
+        _('status_file_list').innerHTML += JSON.parse(event.target.responseText).files.file1.originalFilename+'<br>';
+        _("progressBar").value = 0; //wil clear progress bar after successful upload
+        filepicker_file_id--
+        filepickeruploadFile(filepicker_files,filepicker_file_id)
+      }
+
+    document.getElementById("filepicker").addEventListener("change", function(event) {
+      let output = document.getElementById("listing");
+      filepicker_files = event.target.files;
+  
+      for (let i=0; i<filepicker_files.length; i++) {
+        let item = document.createElement("li");
+        item.innerHTML = filepicker_files[i].webkitRelativePath;
+        if(item.innerHTML.indexOf("~$")>-1) continue;
+        flag=chechfile([],item.innerHTML)
+        if(flag) output.appendChild(item);
+      };
+      console.log(filepicker_files.length);
+      if(filepicker_files.length>0){
+        filepicker_file_id=filepicker_files.length
+        filepickeruploadFile(filepicker_files,filepicker_file_id)
+      }
+    }, false);
+
+
+
+</body>
+
+</html>

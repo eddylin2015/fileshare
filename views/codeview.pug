@@ -1,0 +1,100 @@
+//link(href="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.css",rel="stylesheet",data-name="vs/editor/editor.main")
+link(href="/monaco-editor/vs/editor/editor.main.css",rel="stylesheet",data-name="vs/editor/editor.main")
+style.
+  body{ padding:0;margin:0; }
+  button.fixed {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 20px;
+    border: 3px solid #73AD21;
+  }
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+  }
+  li { float: left;  }
+  li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 4px 6px;
+    text-decoration: none;
+  }
+  li a:hover:not(.active) { background-color: #111;  }
+  .active { background-color: #04AA6D; }
+
+div#menu
+  ul
+   li
+     a(href="#") Home
+   li
+     a(href="#",onclick="SaveRun();") Save
+   li
+     a(href="#") Contact
+   li(style="float:right")
+     a(class="active", href="#") About
+
+
+  //button(onclick="SaveRun();",class="fixed") Save
+div#container(style="padding:0;margin:0; width: 100%; height: 95%; border: 1px solid grey")
+
+
+script(src="/monaco-editor/vs/loader.js")
+
+script(src="/monaco-editor/vs/editor/editor.main.nls.js")
+script(src="/monaco-editor/vs/editor/editor.main.js")
+script(src="/monaco-editor/vs/basic-languages/python/python.js")
+script(src="/monaco-editor/vs/base/worker/workerMain.js")
+
+script.
+  let str=String.raw`!{code}`;
+  var editor =null;
+  require.config({ paths: { vs: 'monaco-editor/min/vs' } });
+  require(['vs/editor/editor.main'], function () {
+        editor = monaco.editor.create(document.getElementById('container'), {
+                value: str,
+                language: 'python',
+      theme: "vs-dark",
+        });
+    //monaco.languages.typescript.javascriptDefaults
+    //    .addExtraLib(`var tmsU={TakeARnd:"",TakeAFra:"",TakeAOpr:"",AdjExpFmt:""};
+    //                 var tmsCalcu={RunExpr:"",RunFrcExpr:"",Sytex_cclist:"",Sytex_cclist_x:"",exprCalc:""}`,
+    //)
+  });
+
+
+  function SaveRun(){
+    var formData = new FormData();
+    formData.append("code", editor.getValue());
+    var url_  =  "!{posturl}".replace("//code?","/code?")
+    var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function()
+        {
+            if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
+            {
+                alert(xmlHttp.responseText);
+            }
+        }
+    xmlHttp.open("post", url_, true);
+    xmlHttp.send(formData)
+  }
+
+  var isCtrl = false;
+  document.onkeyup=function(e){
+      if(e.keyCode == 17) isCtrl=false;
+  }
+  
+  document.onkeydown=function(e){
+      if(e.keyCode == 17) isCtrl=true;
+      if(e.keyCode == 83 && isCtrl == true) {
+          //run code for CTRL+S -- ie, save!
+          SaveRun()
+          return false;
+      }
+  }  
+

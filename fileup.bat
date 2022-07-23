@@ -1,2 +1,5 @@
 start chrome http://localhost:81
-node app.js
+e:
+cd fileshare\
+
+pm2 start app2.js

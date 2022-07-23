@@ -3,7 +3,7 @@ const fs = require("fs");
 const staticfile = require('./inc/StaticFile');
 const formidable = require('formidable');
 const path = require('path');
-const hostdir = "www/";
+const hostdir = "www";
 const port = 81;
 
 var express = require('express');
@@ -13,21 +13,31 @@ app.disable('x-powered-by');
 app.disable('etag');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
+
 app.use('/internal/photo', require('./routers/photo/api'));
+
+
 app.get('/', (req, res) => {
-	res.redirect("/form")
+	res.redirect("/internal/photo")
 });
+
 app.get('/mathkeyboard', (req, res) => {
 	let mimetype = "text/html";
 	staticfile._pipe(fs, 'views/html/mathkeyboard.html', mimetype, res);
 });
+
+app.get('/news', (req, res) => {
+	let mimetype = "text/html";
+	staticfile._pipe(fs, 'views/html/news.html', mimetype, res);
+});
+
 
 app.get('/form', (req, res) => {
 	let mimetype = "text/html";
 	staticfile._pipe(fs, 'views/html/fileshare_form.html', mimetype, res);
 });
 app.post('/form', (req, res) => {
-	let uploadDir = `www`;
+	let uploadDir = hostdir;
 	let form = formidable(
 		{
 			multiples: true,

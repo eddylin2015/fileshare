@@ -8,8 +8,11 @@ const url_utils = require('url');
 /////
 var os = require('os');
 var ifaces = os.networkInterfaces();
+console.log(ifaces)
 Object.keys(ifaces).forEach(function (ifname) {
   var alias = 0;
+  
+
   ifaces[ifname].forEach(function (iface) {
     if ('IPv4' !== iface.family || iface.internal !== false) {
       // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
@@ -116,21 +119,52 @@ if (cluster.isMaster) {
       res.writeHead(301, { Location: `${subpath}` });
       res.end();
       return;      
-    }else if(req.url.indexOf('/pic')>-1 )
+    }
+    else if(req.url.indexOf('/pic10')>-1 )
     {
+      console.log("pic10")
+      var query = url_utils.parse(req.url, true).query;
+      let token=0;
+      if (typeof query.token != 'undefined') {
+         token=Number(query.token);
+      }
+      let return_url=req.url.split("/pic10")[0];
+      let next_url=req.url.split("/pic10")[0]+"/pic10?token="+(token+10)
       res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
-      var files = fs.readdirSync(curr_path);
+      var files = fs.readdirSync(decodeURI(curr_path));
       //res.write("<a href='/Up_Step'>..</a><br>");
+      let piclist=[];
       files.forEach(function (file) {
-        let file_stat=fs.statSync(curr_path +"/"+ file);
+        let file_stat=fs.statSync(decodeURI(curr_path +"/"+ file));
           if (file.toUpperCase().indexOf(".JPG")>-1||file.toUpperCase().indexOf(".PNG")>-1||file.toUpperCase().indexOf(".GIF")>-1) {
               if(subpath=="/") subpath=""
-              res.write(`<img src=${subpath}/down?file=` + encodeURI(file) + ">" + file + "<br>");
+              piclist.push(`<img style="width:100%" src=${subpath}/down?file=` + encodeURI(file) + ">" + file + "<br>");
+          }
+      });
+      for(let i=0;i<piclist.length;i++){
+        if(i>=token && i<(token+10)){
+          res.write(piclist[i]);
+        }
+      }
+      res.end();
+      return;
+    }
+    else if(req.url.indexOf('/pic')>-1 )
+    {
+      res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
+      var files = fs.readdirSync(decodeURI(curr_path));
+      //res.write("<a href='/Up_Step'>..</a><br>");
+      files.forEach(function (file) {
+        let file_stat=fs.statSync(decodeURI(curr_path +"/"+ file));
+          if (file.toUpperCase().indexOf(".JPG")>-1||file.toUpperCase().indexOf(".PNG")>-1||file.toUpperCase().indexOf(".GIF")>-1) {
+              if(subpath=="/") subpath=""
+              res.write(`<img style="width:100%" src=${subpath}/down?file=` + encodeURI(file) + ">" + file + "<br>");
           }
       });
       res.end();
       return;
-    }else if(req.url.indexOf('/dir')>-1 || req.url.indexOf('/ls')>-1 )
+    }
+    else if(req.url.indexOf('/dir')>-1 || req.url.indexOf('/ls')>-1 )
     {
       res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
       var files = fs.readdirSync(curr_path);
@@ -155,7 +189,7 @@ if (cluster.isMaster) {
     {
       var query = url_utils.parse(req.url, true).query;
       if (typeof query.file != 'undefined') {
-          down_pip_file(curr_path +"/"+ query.file,res)
+          down_pip_file(decodeURI(curr_path +"/"+ query.file),res)
       }
       return;
     }
