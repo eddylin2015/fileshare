@@ -61,7 +61,7 @@ app.disable('x-powered-by');
 app.disable('etag');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
-app.use(bodyParser.urlencoded())
+app.use(bodyParser.urlencoded({ extended: true }))
 
 //app.use('/internal/photo', require('./routers/photo/api'));
 function checkuser(req) {return true;}
