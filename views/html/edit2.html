@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <script src="/static/javascripts/jquery.js"></script>
+    <script src="/static/javascripts/bootstrap.js"></script>
+    <script src="/static/javascripts/cool/grid_export.js"></script>
+    <link rel="stylesheet" href="/static/codemirror/5/lib/codemirror.css" />
+    <script src="/static/codemirror/5/lib/codemirror.js"></script>
+    <script src="/static/codemirror/5/mode/python/python.js"></script>
+    <script src="/static/CodeMirror/5/mode/javascript/javascript.js"></script>
+    <script src="/static/CodeMirror/5/mode/pug/pug.js"></script>
+    <script src="/static/javascripts/cool/webtoolkit.aim.js"></script>
+    <link rel="stylesheet" href="/static/codemirror/5/theme/blackboard.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/dracula.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/erlang-dark.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/juejin.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/mdn-like.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/neat.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/panda-syntax.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/rubyblue.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/the-matrix.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/tomorrow-night-eighties.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/ttcn.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/vibrant-ink.css">
+    <link rel="stylesheet" href="/static/codemirror/5/theme/yonce.css">
+    <script src="/static/pyodide/pyodide.js"></script>
+    <style>
+        body {
+            padding: 0;
+        }
+
+        div {
+            font-size: 20px;
+        }
+        .CodeMirror {
+           height: 100%;
+           border-top: 1px solid black;
+           border-bottom: 1px solid black;
+        }     
+                   
+        div.msgcenter {
+           position: fixed;
+           bottom: 0; left: 0; width:98%; height:50%;
+           border: 3px solid green;
+           padding: 3px;
+           background-color: white; font-size: 30px;
+           font-size:16px;
+        }
+        div.msgcenter>textarea { position: absolute; top: 0; bottom: 0; right: 0; left: 0; }
+        div.msgboxclosebtn{	position: absolute;top: 0; right: 0;}    
+        textarea.output_code{ width:100%; height: 100%;}    
+        div.CodeDiv {  position: fixed;
+           top:30Px;
+           bottom: 0; left: 0; width: 99%; height:95%;
+           } 
+        div.CodeDiv>textarea { position: absolute; top: 0; bottom: 0; right: 0; left: 0; }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            // web ready 
+        });
+        function startCallback() { return true; }
+        function completeCallback(response) {
+            alert(response);
+        } 
+    </script><!--enctype="multipart/form-data",-->
+</head>
+
+<body>
+    <form id="CodeForm" method="POST" enctype="multipart/form-data"
+        onSubmit="return AIM.submit(this, {'onStart' : startCallback, 'onComplete' : completeCallback})">
+        <button onclick="gotoParentDir();event.preventDefault();">return</button>
+        <input id="downloadfile" type="button" value="download" />
+        <input type="submit" value="save" />
+        <button onclick="evaluatePython('code');show_msgbox('msgbox');event.preventDefault();">Run</button>
+        <button onclick="clearOutput('code');event.preventDefault();">Clr</button>
+        <button onclick="show_msgbox('msgbox');event.preventDefault();">output</button>
+
+        <span>!{filename}</span>
+        <span>Select a theme:</span> 
+        <select onchange="selectTheme()" id=select>
+            <option selected>default</option>
+            <option>blackboard</option>
+            <option>dracula</option>
+            <option>erlang-dark</option>
+            <option>juejin</option>
+            <option>mdn-like</option>
+            <option>neat</option>
+            <option>panda-syntax</option>
+            <option>rubyblue</option>
+            <option>the-matrix</option>
+            <option>tomorrow-night-eighties</option>
+            <option>ttcn</option>
+            <option>vibrant-ink</option>
+            <option>yonce</option>
+        </select>
+        <input type="button" value="rename" id="rename_btn" onclick="makeRequest_rename();event.preventDefault();" />
+        <div class="CodeDiv" >
+        <textarea class="CodeTextArea" id="code" name="code" style=" border: 1px solid grey">
+!{code}
+        </textarea>
+        </div>
+    </form>
+    <div class="msgcenter" id="msgbox" style="display: block;">
+        <textarea id="output_code" disabled></textarea>
+        <div class="msgboxclosebtn"><button onclick="close_msgbox('msgbox')">x</button></div>
+    </div>
+    
+    <script>
+        function input_fixed(text) {
+          return prompt(text);
+        };        
+        function close_msgbox(x){
+            document.getElementById(x).style.display = "none";
+        }
+        function show_msgbox(x){
+            document.getElementById(x).style.display = "block";
+        }        
+        var output = document.getElementById("output_code");
+        var msgbox = document.getElementById("msgbox");
+        var code = document.getElementById("code");
+        function addToOutput(s) {
+            if (s) {
+                console.log(s)
+                output.value += s + "\n";
+            }
+        }
+        output.value = "Initializing...\n";
+        // init Pyodide
+        async function main() {
+            let pyodide = await loadPyodide({
+                stdin: () => {
+                    let result = prompt();
+                    addToOutput(result);
+                    return result;
+                },
+                stdout: async (x) => {
+                    addToOutput(x);
+                },
+            });
+            let namespace = pyodide.globals.get("dict")();       
+            await pyodide.loadPackage(["numpy","sympy","matplotlib"]);
+            await pyodide.runPythonAsync(`
+               from pyodide.http import pyfetch
+               package_url="!{package_url}"
+               if not package_url=="" :
+                   response = await pyfetch(package_url)
+                   await response.unpack_archive()
+               from js import input_fixed
+               input = input_fixed
+               __builtins__.input = input_fixed                       
+            `)
+            addToOutput("init completed!");
+            return pyodide;
+
+        }
+        let pyodideReadyPromise = main();
+        async function clearOutput(x) {
+            let output__ = document.getElementById("output_" + x);
+            output__.value = "";
+            const matches = document.querySelectorAll("div");
+            for(let elm of matches)
+            {
+                if(elm.id.startsWith("matplotlib_"))
+                  elm.remove();
+            }
+        }
+        async function evaluatePython(x) {
+            for(let e_ of editors) e_.save()
+            let output__ = document.getElementById("output_" + x);
+            let code__ = document.getElementById(x);
+            let pyodide = await pyodideReadyPromise;
+            try {
+                let _output_txt = pyodide.runPython(code__.value);
+                addToOutput(_output_txt);
+            } catch (err) {
+                addToOutput(err);
+            }
+        }
+        var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+            mode: {name: "python",  //"text/x-cython",
+               version: 3,
+               singleLineStringErrors: false
+               },
+               lineNumbers: true,
+               indentUnit: 4,
+               matchBrackets: true,
+               viewportMargin: Infinity,
+               
+        }
+        );
+        //  lineNumbers: true,
+        //  styleActiveLine: true,
+        //  matchBrackets: true
+        var editors=[editor]
+    </script>
+    <script>
+      function gotoParentDir(){
+        let url_=window.location.href.split("/");
+        let parentdir="/"
+        for(let i=1;i<url_.length-2;i++) parentdir+=url_[i]+"/"
+        window.location.href=parentdir;
+      }        
+        function alertContents() {
+            if (httpRequest.readyState === XMLHttpRequest.DONE) {
+                if (httpRequest.status === 200) {
+                    alert(httpRequest.responseText);
+                } else {
+                    alert("There was a problem with the request.");
+                }
+            }
+        }
+        document.addEventListener('keydown', function (event) {
+            console.log(editor.save())
+            if (event.ctrlKey && event.key === 's') {
+                event.preventDefault();
+                $.post("!{OriginUrl}", $("#CodeForm").serialize(), function (data) {
+                    console.log(data)
+                }).fail(function (err) {
+                    console.log("troubleshoot...請再按一下[确定]")
+                });
+            }
+        });
+
+        function saveTextAsFile() {
+            console.log(editor.save())
+            var textToWrite = document.getElementById('code').innerHTML;
+            var textFileAsBlob = new Blob([textToWrite], { type: 'text/plain' });
+            var fileNameToSaveAs = "!{filename}"; //filename.extension
+            var downloadLink = document.createElement("a");
+            downloadLink.download = fileNameToSaveAs;
+            downloadLink.innerHTML = "Download File";
+            if (window.webkitURL != null) {
+                // Chrome allows the link to be clicked without actually adding it to the DOM.
+                downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+            } else {
+                // Firefox requires the link to be added to the DOM before it can be clicked.
+                downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+                downloadLink.onclick = destroyClickedElement;
+                downloadLink.style.display = "none";
+                document.body.appendChild(downloadLink);
+            }
+            downloadLink.click();
+        }
+        document.getElementById('downloadfile').addEventListener('click', saveTextAsFile);
+        function destroyClickedElement(event) {
+            document.body.removeChild(event.target);
+        }
+
+        function makeRequest_rename() {
+            let filename = "!{filename}";
+            filename = prompt("Please enter filename", filename);
+            if (filename != null) {
+                httpRequest = new XMLHttpRequest();
+                if (!httpRequest) {
+                    alert("Giving up :( Cannot create an XMLHTTP instance");
+                    return false;
+                }
+                httpRequest.onreadystatechange = alertContents;
+                httpRequest.open("GET", "!{OriginUrl}&renamefilename=" + filename);
+                httpRequest.send();
+            }
+        }
+        var input = document.getElementById("select");
+        function selectTheme(idx=-1) {
+            if(idx>-1){
+                var theme = input.options[0].textContent;
+             editor.setOption("theme", theme);
+             location.hash = "#" + theme;
+
+            }else{
+             var theme = input.options[input.selectedIndex].textContent;
+             editor.setOption("theme", theme);
+             location.hash = "#" + theme;
+            }
+        }
+        var choice = (location.hash && location.hash.slice(1)) ||
+            (document.location.search &&
+                decodeURIComponent(document.location.search.slice(1)));
+        if (choice) {
+            input.value = choice;
+            editor.setOption("theme", choice);
+        }
+        CodeMirror.on(window, "hashchange", function () {
+            var theme = location.hash.slice(1);
+            if (theme) { input.value = theme; selectTheme(); }
+        });
+        selectTheme(0)
+    </script>
+</body>
+
+</html>

@@ -49,11 +49,11 @@ function coolauth(req,res)
                 var creds = plain_auth.split(':');      // split on a ':'
                 var username = creds[0];
                 var password = creds[1];
-                if((username == 's1') && (password == '123')) {   // Is the username/password correct?
+                if((username == 't1') && (password == '123')) {   // Is the username/password correct?
 				return username ;
                         //res.statusCode = 200;  // OK
                         //res.end('<html><body>Congratulations you just hax0rd teh Gibson!</body></html>');
-                }else if((username == 'admin') && (password == '123')) {   // Is the username/password correct?
+                }else if((username == 's1') && (password == '123')) {   // Is the username/password correct?
 				return username ;
                 }else {
                         res.statusCode = 401; // Force them to retry authentication

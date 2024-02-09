@@ -1,6 +1,8 @@
 'use strict'
 const fs = require("fs");
 const staticfile = require('./inc/StaticFile');
+const tools = require('./inc/utils')
+const webfolder = require('./inc/webfolder')
 const formidable = require('formidable');
 const process = require('process');
 const url_utils = require('url');
@@ -8,51 +10,6 @@ const path = require('path');
 const uploadDir =process.cwd()+"/www";
 const port = 81;
 const ignore_files=["ignore.txt","app.yaml","config.py","__pycache__","static", "tox.ini","model_cloudsql.py","mySession.1.py","mySession.py","storage.py","main.py","crud.py"]
-
-function down_pip_file (filename,  res) {
-    filename=decodeURI(filename)
-    let mimetype_ =  mimetype(filename);
-    console.log('read static file_pipe:' + filename);
-
-    try {
-      if (fs.existsSync(filename)) {
-        if(mimetype_=="NULL"){
-          res.setHeader('Content-disposition', 'attachment; filename=' + encodeURI(filename));
-        }else{
-          res.writeHead(200, { 'Content-Type': mimetype_ }); 
-        }
-        fs.createReadStream(filename).pipe(res);
-      }
-      else {
-          res.writeHead(404, { 'Content-Type': 'text/html' });
-          return res.end("404 Not Found");
-      }
-    }catch (err) {
-      console.log(err);
-    }
-  };
-  function mimetype(filename) {
-    var dotoffset = filename.lastIndexOf('.');
-    if (dotoffset == -1)
-        return "NULL";
-    var extra_name = filename.substr(dotoffset);
-    var mimetype_obj = {
-        '.html': 'text/html',
-        '.ico': 'image/x-icon',
-        '.jpg': 'image/jpeg',
-        '.jepg': 'image/jpeg',
-        '.png': 'image/png',
-        '.gif': 'image/gif',
-        '.css': 'text/css',
-        '.js': 'text/javascript',
-        '.txt': 'text/plain'
-    };
-    for (var x in mimetype_obj) {
-        if (extra_name == x)
-            return mimetype_obj[x];
-    }
-    return "NULL";
-  };
 var bodyParser = require('body-parser');
 var express = require('express');
 var app = express();
@@ -66,6 +23,32 @@ app.use(bodyParser.urlencoded({ extended: true }))
 //app.use('/internal/photo', require('./routers/photo/api'));
 function checkuser(req) {return true;}
 app.use(function (req, res, next) {
+    if(req.url.indexOf('lite/index.html') > -1){
+        //return webfolder.WebRouter(req,res,uploadDir,"/")
+        return tools.down_pip_file(uploadDir + "/" +req.url,res)
+    }
+    if(req.url.indexOf('lite/lab/index.html') > -1){
+        //return webfolder.WebRouter(req,res,uploadDir,"/")
+        return tools.down_pip_file(uploadDir + "/" +req.url,res)
+    }
+    if(req.url.startsWith('/lite/') > -1){
+        //return webfolder.WebRouter(req,res,uploadDir,"/")
+        console.log(req.url)
+        return tools.down_pip_file(uploadDir + "/" +req.url.split("?")[0],res)
+    }
+    if(req.url.indexOf('?edit&file=') > -1){
+        return webfolder.WebRouter(req,res,uploadDir,"/")
+    }    
+    if(req.url.indexOf("&file=")>-1){
+        return next();
+    }
+    let m=req.url.match(/[.](js|html|htm|py|css|txt|jpg|png|ico|zip|tar|csv|pdf|whl|wasm|json|ipynb|webmanifest)$/g);
+    if(m && m.length==1) {    
+        return tools.down_pip_file(uploadDir + "/" +req.url,res)
+    }
+    next();
+})
+app.use(function (req, res, next) {
     if (!checkuser(req)) return res.end("U are hacker!")
     const { headers, method, url } = req;
     let subpath = ""
@@ -77,6 +60,17 @@ app.use(function (req, res, next) {
     console.log(method, url, subpath)
     subpath=subpath.replace(/%25/g,"%").replace(/[/]+/g,"/")   
     let curr_path =decodeURI(uploadDir) +decodeURI(subpath);
+    if (req.url.startsWith('/static/')){
+        let filepath=uploadDir + "/" + decodeURI(req.url);
+        filepath =filepath.replace(/[/]+/g,"/")         
+        tools.down_pip_file(filepath, res)
+        return;
+    }
+
+    if (req.url.indexOf('/api/SavaData') > -1) {
+        res.end(JSON.stringify(req.body));
+        return;
+    }
     if (req.url.indexOf('/makedir') > -1) {
         var query = url_utils.parse(req.url, true).query;
         if (typeof query.dirname != 'undefined') {
@@ -88,7 +82,6 @@ app.use(function (req, res, next) {
         res.writeHead(301, { Location: `${subpath}` });
         res.end();
         return;
-
     } 
     else if(req.url.indexOf('/playSafariVideo?file=') > -1){
         let videoPath=null;
@@ -213,23 +206,12 @@ app.use(function (req, res, next) {
         let file_stat=fs.statSync(decodeURI(curr_path +"/"+ file));
           if (file.toUpperCase().indexOf(".JPG")>-1||file.toUpperCase().indexOf(".PNG")>-1||file.toUpperCase().indexOf(".GIF")>-1||file.toUpperCase().indexOf(".JFIF")>-1) {
               if(subpath=="/") subpath=""
-              piclist.push(`<img style="max-width:1500px" src=${subpath}/down?file=` + encodeURI(file) + ">" + file + "<br>");
+              piclist.push(`<img style="max-width:1500px" src=${subpath}?down&file=` + encodeURI(file) + ">" + file + "<br>");
           }
       });
       res.write(`<div style="position:fixed;top:0">
       <a href=${return_url}><button>return</button</a>
       <a href=${next_url}><button>next 10</button></a>
-      <!-- a href=#posi0>pic 0</button></a -->
-      <!-- a href=#posi1>pic 1</button></a -->
-      <!-- a href=#posi2>pic 2</button></a -->
-      <!-- a href=#posi3>pic 3</button></a -->
-      <!-- a href=#posi4>pic 4</button></a -->
-      <!-- a href=#posi5>pic 5</button></a -->
-      <!-- a href=#posi6>pic 6</button></a -->
-      <!-- a href=#posi7>pic 7</button></a -->
-      <!-- a href=#posi8>pic 8</button></a -->
-      <!-- a href=#posi9>pic 9</button></a -->
-
       </div>
       `);
       let cnt=0;
@@ -255,7 +237,7 @@ app.use(function (req, res, next) {
             if (file.toUpperCase().indexOf(".JPEG") > -1 ||file.toUpperCase().indexOf(".JPG") > -1 || file.toUpperCase().indexOf(".PNG") > -1 || file.toUpperCase().indexOf(".GIF") > -1) {
                 if (subpath == "/") subpath = ""
                 subpath= subpath.replace(/[/]+/g,"/")         
-                res.write(`<img style="max-width:1500px" src=${subpath}/down?file=` + encodeURI(file) + ">" + file + "<br>");
+                res.write(`<img style="max-width:1500px" src=${subpath}?down&file=` + encodeURI(file) + ">" + file + "<br>");
             }
         });
         res.end();
@@ -273,23 +255,24 @@ app.use(function (req, res, next) {
             else {
                 //filelist.push(file);
                 if (subpath == "/") subpath = ""
-                res.write(`<a href=${subpath}/down?file=` + encodeURI(file) + ">" + file + "</a>");
+                res.write(`<a href=${subpath}?down&file=` + encodeURI(file) + ">" + file + "</a>");
                 res.write(`(${(file_stat.size / 1000000).toFixed(2)} m )<br> `);
             }
         });
         res.end("<div> down speend 8m/sec.</div>");
         return;
     }
-    else if (req.url.indexOf('/down?file=') > -1) {
+    else if (req.url.indexOf('?down&file=') > -1) {
         var query = url_utils.parse(req.url, true).query;
         if (typeof query.file != 'undefined') {
             let filepath=curr_path + "/" + decodeURI(query.file);
-            filepath =filepath.replace(/[/]+/g,"/")         
-            down_pip_file(filepath, res)
+            filepath =filepath.replace(/[/]+/g,"/")   
+            console.log(curr_path,query.file);      
+            tools.down_pip_file(filepath, res)
         }
         return;
     }
-    else if (req.method == 'POST' && req.url.indexOf('/edit?file=') > -1) {
+    else if (req.method == 'POST' && req.url.indexOf('?edit&file=') > -1) {
         var query = url_utils.parse(req.url, true).query;
         if (typeof query.file != 'undefined') {
             let filepath=curr_path + "/" + query.file
@@ -298,7 +281,7 @@ app.use(function (req, res, next) {
         }
         return;
     }
-    else if (req.url.indexOf('/edit?file=') > -1) {
+    else if (req.url.indexOf('?edit&file=') > -1) {
         var query = url_utils.parse(req.url, true).query;
         if (typeof query.file != 'undefined') {
             let filepath=curr_path + "/" + query.file
@@ -309,7 +292,7 @@ app.use(function (req, res, next) {
         }
         return;
     }
-    else if (req.method == 'POST' && req.url.indexOf('/code?file=') > -1) {
+    else if (req.method == 'POST' && req.url.indexOf('?code&file=') > -1) {
         var query = url_utils.parse(req.url, true).query;
         if (typeof query.file != 'undefined') {
             let filepath=curr_path + "/" + query.file
@@ -350,7 +333,7 @@ app.use(function (req, res, next) {
         }
         return;
     }
-    else if (req.url.indexOf('/code?file=') > -1) {
+    else if (req.url.indexOf('?code&file=') > -1) {
         let MyBaseUrl="";
         var query = url_utils.parse(req.url, true).query;
         if (typeof query.file != 'undefined') {
@@ -416,9 +399,12 @@ app.use(function (req, res, next) {
                 //filelist.push(file);
                 if (subpath == "/") subpath = ""
                 ////
-                let href_edit=`${req.baseUrl}${encodeURI(subpath)}/edit?file=` + encodeURI(file)
-                let href_down=`${req.baseUrl}${encodeURI(subpath)}/down?file=` + encodeURI(file)
-                let href_code=`${req.baseUrl}${encodeURI(subpath)}/code?file=` + encodeURI(file)
+                let href_edit=`${req.baseUrl}${encodeURI(subpath)}?edit&file=` + encodeURI(file)
+                let href_down=`${req.baseUrl}${encodeURI(subpath)}?down&file=` + encodeURI(file)
+                let href_code=`${req.baseUrl}${encodeURI(subpath)}?code&file=` + encodeURI(file)                
+                //let href_edit=`${req.baseUrl}${encodeURI(subpath)}/edit?file=` + encodeURI(file)
+                //let href_down=`${req.baseUrl}${encodeURI(subpath)}/down?file=` + encodeURI(file)
+                //let href_code=`${req.baseUrl}${encodeURI(subpath)}/code?file=` + encodeURI(file)
                 if(file.indexOf(".py")>-1||file.indexOf(".htm")>-1){
                    file_list.push(`<div>file:<a href=${href_down}>` + file + `</a>
                    <a href=${href_edit}><button>E</button></a>
@@ -448,9 +434,14 @@ app.use(function (req, res, next) {
 
 //app.use((req, res) => {	res.status(404).send('Not Found');  });
 
-app.listen(port, () => {
-	staticfile.hostIP(); console.log(`Example app listening at http://localhost:${port}`)
-})
+//app.listen(port, () => {
+//	staticfile.hostIP(); console.log(`Example app listening at http://localhost:${port}`)
+//})
 
-//const server = https.createServer(app);
-//server.listen(port, function () {	staticfile.hostIP()	;console.log("server running at https://IP_ADDRESS:", port)});
+const server = require('http').createServer(app);
+server.listen(port, function () {	tools.hostIP()	;console.log("server running at https://IP_ADDRESS:", port)});
+
+var myhome_server = require('http').createServer(app);
+myhome_server.listen("80", function() {
+    console.log('Listening on admin port 80' );
+});
