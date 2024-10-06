@@ -1,0 +1,448 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="robots" content="noindex">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script>
+        function PadStr(x, l) { x = x.toString(); return x.padStart(l - x.length, "0"); }
+        function getMillisecond() { let d = new Date(); return d.toLocaleString('sv').replace(/[ :]/g, "") + PadStr(d.getMilliseconds(), 4); }
+        function insertCanvas(_w, _h) {
+            var mainCanvas = document.createElement('canvas');
+            mainCanvas.width = _w;
+            mainCanvas.height = _h;
+            document.body.appendChild(mainCanvas);
+            return mainCanvas;
+        }
+        var postUrl = "file_upload_parser.php";
+        function formreset() { _("upload_form").reset(); }
+        function IsSafari() {
+            var is_safari = navigator.userAgent.toLowerCase().indexOf('safari/') > -1;
+            return is_safari;
+        }
+        function _(el) {
+            return document.getElementById(el);
+        }
+        var file_id = 0;
+        function uploadResizeImageFile(fileid = 0, postUrl = "file_upload_parser.php") {
+            file_id = fileid
+            if (_("file1").files.length > file_id)  //one by one
+            {
+                file = _("file1").files[file_id];
+                if (file.type.indexOf("image/") == -1) {
+                    //var file = _("file1").files[0]; console.log(file.name+" | "+file.size+" | "+file.type);
+                    var formdata = new FormData();
+                    formdata.append("file1", file);
+                    var ajax = new XMLHttpRequest();
+                    ajax.upload.addEventListener("progress", progressHandler, false);
+                    ajax.addEventListener("load", completeHandler, false);
+                    ajax.addEventListener("error", errorHandler, false);
+                    ajax.addEventListener("abort", abortHandler, false);
+                    ajax.open("POST", "file_upload_parser.php"); // http://www.developphp.com/video/JavaScript/File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP
+                    ajax.send(formdata);
+                    //alert(`錯誤:${file.type}`); return; 
+                } else {
+                    var img = new Image();
+                    img.onload = function () {
+                        let mxw_ = 1536;
+                        let rate = img.width > mxw_ ? img.width / mxw_ : 1
+                        let w_ = img.width / rate
+                        let h_ = img.height / rate
+                        let rate_ = h_ > mxw_ ? h_ / mxw_ : 1
+                        let imgcanvs = insertCanvas(img.width / rate / rate_, img.height / rate / rate_)
+                        let imgctx = imgcanvs.getContext("2d");
+                        imgctx.drawImage(img, 0, 0, img.width / rate / rate_, img.height / rate / rate_);
+                        imgcanvs.toBlob(blob => {
+                            console.log(file.name, file.type)
+                            let file_ = new File([blob], file.name, { type: file.type });
+                            file_.type = file.type;
+                            console.log(file_)
+                            var formdata = new FormData();
+                            formdata.append("file1", file_);
+                            var ajax = new XMLHttpRequest();
+                            ajax.upload.addEventListener("progress", progressHandler, false);
+                            ajax.addEventListener("load", completeHandler, false);
+                            ajax.addEventListener("error", errorHandler, false);
+                            ajax.addEventListener("abort", abortHandler, false);
+                            ajax.open("POST", postUrl);
+                            ajax.send(formdata);
+                        }, "image/jpeg", 0.95);
+                    }
+                    img.src = window.URL.createObjectURL(file);
+                    document.body.appendChild(img);
+                }
+            }
+        }
+        function uploadOriFile(fileid = 0) {
+            file_id = fileid
+            console.log(_("file1").files.length)
+            //for (file of _("file1").files) {
+            if (_("file1").files.length > file_id) {
+                file = _("file1").files[file_id]
+                //var file = _("file1").files[0]; console.log(file.name+" | "+file.size+" | "+file.type);
+                var formdata = new FormData();
+                formdata.append("file1", file);
+                var ajax = new XMLHttpRequest();
+                ajax.upload.addEventListener("progress", progressHandler, false);
+                ajax.addEventListener("load", completeHandler, false);
+                ajax.addEventListener("error", errorHandler, false);
+                ajax.addEventListener("abort", abortHandler, false);
+                ajax.open("POST", "file_upload_parser.php"); // http://www.developphp.com/video/JavaScript/File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP
+                ajax.send(formdata);
+            }
+        }
+        const uploadFile = uploadResizeImageFile;
+        function progressHandler(event) {
+            _("loaded_n_total").innerHTML = "Uploaded " + event.loaded + " bytes of " + event.total;
+            var percent = (event.loaded / event.total) * 100;
+            _("progressBar").value = Math.round(percent);
+            _("status").innerHTML = Math.round(percent) + "% uploaded... please wait";
+        }
+        function completeHandler(event) {
+            _("status").innerHTML = event.target.responseText;
+            _('status_file_list').innerHTML += JSON.parse(event.target.responseText).files.file1.name + '<br>';
+            _("progressBar").value = 0; //wil clear progress bar after successful upload
+            file_id++
+            uploadFile(file_id)
+        }
+
+        function errorHandler(event) {
+            _("status").innerHTML = "Upload Failed";
+        }
+
+        function abortHandler(event) {
+            _("status").innerHTML = "Upload Aborted";
+        }
+    </script>    
+    <style>
+      body{margin:30px;}    
+      div.msgcenter {
+         position: fixed;
+         top: 30; left: 30; width:90%; height:60%;
+         border: 3px solid green;
+         padding: 3px;
+         background-color: white; font-size: 30px;
+         font-size:16px;
+         overflow-y:scroll;
+      }
+      div.msgboxclosebtn{	position: absolute;top: 0; right: 0;}       
+    </style>  
+</head>
+<body>
+    <a href="/"><button id="ajaxButton_return" type="button">主頁</button></a>
+    <button id="ajaxButton_parent" type="button">返回上一層 ..</button>
+    <button id="ajaxButton_dir" type="button">dir</button>
+    <button id="ajaxButton_pic" type="button">pic</button>    
+    <a href=ls><button>list</button> </a>
+    <div style="display:${adminRight?'block':'none'}">
+      <span>CMD:</span>
+      <button id="ajaxButton_upload_form" type="button">File Upload</button>
+      <button id="ajaxButton_uploadDir_form" type="button">Folder Upload</button>
+      <button id="ajaxButton_md"  type="button">make_dir</button>
+      <button id="ajaxButton_mov" type="button">mov %s</button>
+      <button id="ajaxButton_movall" type="button" style="display:none">movall MT</button>
+      <button id="ajaxButton_del" type="button">del %s</button>
+      <button id="ajaxButton_edit" type="button">edit %s.txt</button>
+      <button id="ajaxButton_ren" type="button">ren %s</button>
+      <div id="uploadDir_form" enctype="multipart/form-data" method="post" style="display:none">
+        <div> Folder Upload(構建中)</div>
+        <input type="file" id="filepicker" name="fileList" webkitdirectory multiple>
+        <div id=listing></div>
+        <button id="ajaxButton_mkdirforfolderupload">cmd ls</button>
+        <button id="ajaxButton_movefileforfolderupload">cmd ls</button>
+      </div>
+      <form id="upload_form" enctype="multipart/form-data" method="post" style="display:none">
+          <div>File Upload :</div>
+          <input type="file" name="file1" id="file1" onchange="uploadFile()" multiple="multiple"><br>
+          <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
+          <h3 id="status"></h3>
+          <p id="loaded_n_total"></p>
+      </form>
+    </div>  
+    <h4>目錄:</h4>  
+    <div id=status_file_list> </div>
+    <div id="ls_ctx">
+    </div>
+    <div id=msgbox class="msgcenter">
+      <div>
+        <b> 信息:</b> 
+        <div id=msgbox_txt></div>
+      </div>  
+      <div class="msgboxclosebtn">
+        <button onclick="close_msgbox('msgbox')"> x </button>
+      </div>  
+    </div>    
+    <script>
+      function rename(x){
+         let mylink=x.getAttribute("mylink")
+         let temp=mylink.split("file=")[1];
+         let sign = prompt(decodeURI(temp),decodeURI(temp));
+         if (sign) {
+           window.location.href=mylink+"&renamefilename="+encodeURI(sign) ;           
+         }
+      }
+      function close_msgbox(x) {
+           document.getElementById(x).style.display = "none";
+      }
+      function alertmsg(x)
+      {
+          document.getElementById("msgbox_txt").innerHTML=x;
+          document.getElementById("msgbox").style.display = "block";
+      }
+      close_msgbox('msgbox');
+      (() => {
+          let httpRequest;
+          document.getElementById("ajaxButton_upload_form")
+              .addEventListener("click", ()=>{
+                  let upl_form=document.getElementById("upload_form") 
+                  upl_form.style.display=upl_form.style.display=="none"?"block":"none"
+              });
+          document.getElementById("ajaxButton_uploadDir_form")
+              .addEventListener("click", ()=>{
+                  let upl_form=document.getElementById("uploadDir_form") 
+                  upl_form.style.display=upl_form.style.display=="none"?"block":"none"
+              });              
+          document.getElementById("ajaxButton_parent")
+              .addEventListener("click", gotoParentDir);
+          document.getElementById("ajaxButton_md")
+              .addEventListener("click", makeRequest_md);
+          document.getElementById("ajaxButton_movall")
+              .addEventListener("click", makeRequest_movallfiles);  
+          document.getElementById("ajaxButton_del")
+              .addEventListener("click", makeRequest_del);
+          document.getElementById("ajaxButton_edit")
+              .addEventListener("click", makeRequest_edit);
+          document.getElementById("ajaxButton_ren")
+              .addEventListener("click", makeRequest_ren);
+          document.getElementById("ajaxButton_mov")
+              .addEventListener("click", makeRequest_mov);                  
+          document.getElementById("ajaxButton_dir")
+              .addEventListener("click", makeRequest);
+          document.getElementById("ajaxButton_pic")
+              .addEventListener("click", makeRequest_pic);
+          document.getElementById("ajaxButton_mkdirforfolderupload")
+              .addEventListener("click", makeRequest_mkdirforfolderupload);
+          document.getElementById("ajaxButton_movefileforfolderupload")
+              .addEventListener("click", makeRequest_movefileforfolderupload);
+          function gotoParentDir() {
+              let url_ = window.location.href.split("/");
+              let parentdir = "/"
+              for (let i = 1; i < url_.length - 2; i++) parentdir += url_[i] + "/"
+              window.location.href = parentdir;
+          }
+          function makeRequest() {
+              httpRequest = new XMLHttpRequest();  
+              if (!httpRequest) {
+                  alert("Giving up :( Cannot create an XMLHTTP instance");
+                  return false;
+              }
+              httpRequest.onreadystatechange = alertContents;
+              httpRequest.open("GET", "dir");
+              httpRequest.send();
+          }
+          function makeRequest_pic() {
+              httpRequest = new XMLHttpRequest();  
+              if (!httpRequest) {
+                  alert("Giving up :( Cannot create an XMLHTTP instance");
+                  return false;
+              }
+              httpRequest.onreadystatechange = alertContents;
+              httpRequest.open("GET", "pic");
+              httpRequest.send();
+          }
+          function makeRequest_md() {
+              let newfolder = prompt("Please enter foldername", "newfolder");
+              if (newfolder != null) {
+                  httpRequest = new XMLHttpRequest();
+                  if (!httpRequest) {
+                      alert("Giving up :( Cannot create an XMLHTTP instance");
+                      return false;
+                  }
+                  httpRequest.onreadystatechange = alertContents;
+                  httpRequest.open("GET", "makedir?dirname=" + newfolder);
+                  httpRequest.send();
+              }
+          }
+          function makeRequest_movallfiles() {
+              let newfolder = prompt("Please enter foldername", "newfolder");
+              if (newfolder != null) {
+                  httpRequest = new XMLHttpRequest();
+                  if (!httpRequest) {
+                      alert("Giving up :( Cannot create an XMLHTTP instance");
+                      return false;
+                  }
+                  httpRequest.onreadystatechange = alertContents;
+                  httpRequest.open("GET", "movallfiles?dirname=" + newfolder);
+                  httpRequest.send();
+              }
+          }
+          function alertContents() {
+              if (httpRequest.readyState === XMLHttpRequest.DONE) {
+                  if (httpRequest.status === 200) {
+                      document.getElementById("ls_ctx").innerHTML = httpRequest.responseText;
+                  } else {
+                      alert("There was a problem with the request.");
+                  }
+              }
+          }
+          function makeRequest_del(){
+            makeRequest_list_file((txt)=>
+            {                      let filelist=txt.split('<br>')
+                      console.log(filelist)
+                      let ctx="<h4>警告:刪除檔案,請自行保留一份!</h4>";
+                      for(let i=0;i<filelist.length;i++){
+                        if(filelist[i].indexOf("Dir:")<0)
+                         ctx+=`${filelist[i].replace("/down?","/rm?")}<br>`
+                      }
+                      alertmsg(ctx);
+            });
+           }
+          function makeRequest_edit(){
+            makeRequest_list_file((txt)=>
+            {         let filelist=txt.split('<br>')
+                      console.log(filelist)
+                      let ctx="<h4>編輯:</h4>";
+                      for(let i=0;i<filelist.length;i++){
+                        if(filelist[i].indexOf("Dir:")<0)
+                         ctx+=`${filelist[i].replace("/down?","/edit?")}<br>`
+                      }
+                      alertmsg(ctx);
+            });
+           }
+          function makeRequest_ren(){
+            makeRequest_list_file((txt)=>
+            {         let filelist=txt.split('<br>')
+                      console.log(filelist)
+                      let ctx="<h4>rename:</h4>";
+                      for(let i=0;i<filelist.length;i++){
+                        if(filelist[i].indexOf("Dir:")<0)
+                         ctx+=`${filelist[i].replace("/down?","/filerename?").replace("href=","href='#' onclick='rename(this);' mylink=")}<br>`
+                      }
+                      alertmsg(ctx);
+            });
+           }
+          function makeRequest_mkdirforfolderupload(){
+            makeRequest_list_file((txt)=>
+            {         let filelist=txt.split('<br>')
+                      console.log(filelist)
+                      let ctx="<h4>mkdir:</h4>";
+                      for(let i=0;i<filelist.length;i++){
+                        if(filelist[i].indexOf("Dir:")<0)
+                        {
+                            let tmp=filelist[i].split("___")
+                        }
+                      }
+                      for(let i=0;i<filelist.length;i++){
+                        if(filelist[i].indexOf("Dir:")<0)
+                         ctx+=`${filelist[i].replace("/down?","/cmd?").replace("href=","href='#' onclick='rename(this);' mylink=")}<br>`
+                      }
+                      alertmsg(ctx);
+            });
+           }
+          function makeRequest_movefileforfolderupload(){
+            makeRequest_list_file((txt)=>
+            {         let filelist=txt.split('<br>')
+                      console.log(filelist)
+                      let ctx="<h4>move:</h4>";
+                      for(let i=0;i<filelist.length;i++){
+                        if(filelist[i].indexOf("Dir:")<0)
+                         ctx+=`${filelist[i].replace("/down?","/cmd?").replace("href=","href='#' onclick='rename(this);' mylink=")}<br>`
+                      }
+                      alertmsg(ctx);
+            });
+           }
+          function makeRequest_list_file(cb){ 
+            httpRequest = new XMLHttpRequest();  
+            if (!httpRequest) {
+                  alert("Giving up :( Cannot create an XMLHTTP instance");
+                  return false;
+            }
+            httpRequest.onreadystatechange = ()=>{
+              if (httpRequest.readyState === XMLHttpRequest.DONE) {
+                  if (httpRequest.status === 200) {
+                    let txt=httpRequest.responseText
+                      cb(txt);
+
+                  } else {
+                      alert("There was a problem with the request.");
+                  }
+              }                
+            };
+            httpRequest.open("GET", "dir");
+            httpRequest.send();
+          }
+          function makeRequest_mov(){
+            let newfolder = prompt("Please enter foldername", "newfolder");
+            if (newfolder != null) {
+                makeRequest_list_file((txt)=>
+                {                      
+                    let filelist=txt.split('<br>')
+                    console.log(filelist)
+                    let ctx=`<h4>移動檔至子目錄 ./${newfolder}</h4>`;
+                    for(let i=0;i<filelist.length;i++){
+                       if(filelist[i].indexOf("Dir:")<0)
+                       ctx+=`${filelist[i].replace("/down?",`/mov?dirname=${newfolder}&`)}<br>`
+                    }
+                    alertmsg(ctx);
+                });
+            }
+          }                
+          makeRequest()
+      })();
+
+      // folder upload start:
+      var code=[]
+      function chechfile(){return true;} 
+      filepicker_file_id=0
+      filepicker_files=null;
+      function filepickeruploadFile(files,i){
+          console.log(i)
+          if(i<=0) return null;
+          let file=files[i-1]
+          console.log(file)
+          flag=chechfile(code,file)
+          console.log("a",flag)
+          if(!flag || (flag && file.size > 3*1024*1024)){
+            _("status").innerHTML = "Upload Failed";
+            filepicker_file_id--
+            filepickeruploadFile(filepicker_files,filepicker_file_id)
+            return;
+          }        
+          var formdata = new FormData();
+          formdata.append("file1", file);
+          var ajax = new XMLHttpRequest();
+          ajax.upload.addEventListener("progress", progressHandler, false);
+          ajax.addEventListener("load", filepickercompleteHandler, false);
+          ajax.addEventListener("error", errorHandler, false);
+          ajax.addEventListener("abort", abortHandler, false);
+          ajax.open("POST", "file_upload_parser.php"); 
+          ajax.send(formdata);      
+      }
+      function filepickercompleteHandler(event) {
+          _("status").innerHTML = event.target.responseText;
+          _('status_file_list').innerHTML += JSON.parse(event.target.responseText).files.file1.originalFilename+'<br>';
+          _("progressBar").value = 0; 
+          filepicker_file_id--
+          filepickeruploadFile(filepicker_files,filepicker_file_id)
+        }
+      document.getElementById("filepicker").addEventListener("change", function(event) {
+        let output = document.getElementById("listing");
+        filepicker_files = event.target.files;
+        for (let i=0; i<filepicker_files.length; i++) {
+          let item = document.createElement("li");
+          item.innerHTML = filepicker_files[i].webkitRelativePath;
+          if(item.innerHTML.indexOf("~$")>-1) continue;
+          flag=chechfile([],item.innerHTML)
+          if(flag) output.appendChild(item);
+        };
+        console.log(filepicker_files.length);
+        if(filepicker_files.length>0){
+          filepicker_file_id=filepicker_files.length
+          filepickeruploadFile(filepicker_files,filepicker_file_id)
+        }
+      }, false);      
+      // folder upload end.
+
+      </script>
+</body>
+
+</html>
