@@ -166,6 +166,10 @@ function down_pip_file (filename,  res) {
         res.writeHead(200, { 'Content-Type': mimetype_ }); 
       }else{
         res.setHeader('Content-Type', mimetype_ ); 
+        res.setHeader('Cache-Control',  'public, max-age=31536000');//, immutable');
+        res.setHeader('Cross-Origin-Resource-Policy','cross-origin');
+        res.setHeader('Age','29537');
+
         res.setHeader('Content-disposition', 'attachment; filename=' + encodeURI(temp_[temp_.length-1]));
       }
       fs.createReadStream(filename).pipe(res);
@@ -178,6 +182,98 @@ function down_pip_file (filename,  res) {
     console.log(err);
   }
 };
+
+///// play video-start
+
+//else if(req.url.indexOf('/playSafariVideo?file=') > -1){
+function playSafariVideo(req,res,videoPath){
+  // Ensure there is a range given for the video
+  let range = req.headers.range;
+  if(!range){range="bytes=0-"}
+  console.log("in",range)
+  // get video stats (about 61MB)
+  let videoSize = fs.statSync(videoPath).size;
+  // Parse Range
+  // Example: "bytes=32324-"
+  const CHUNK_SIZE = 10 ** 6; // 1MB
+  const parts = range.split("-");
+  console.log(parts)
+  const start = Number(parts[0].replace(/\D/g, ""));
+  let end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+  if(parts.length>1 && parts[1]!=="" ){
+    end = Number(parts[1].replace(/\D/g, ""));
+    if(end>1) {end = Math.min(start + CHUNK_SIZE, videoSize - 1);}
+  }
+  //Math.min(start + CHUNK_SIZE, videoSize - 1);
+  const contentLength = end - start + 1;
+  // get video stats (about 61MB)
+  if(range=="bytes=0-1"){
+      res.writeHead(206, {
+          "Connection":"keep-alive",
+          'Accept-Ranges': 'bytes',
+          'Keep-Alive': 'timeout=2, max=100',
+          'Content-Type': "video/mp4",
+          'Content-Range': 'bytes 0-1/' + videoSize,
+          "Content-Length": 2,
+        });
+        const fileStream = fs.createReadStream(videoPath, {start,end});
+        fileStream.on("error", error => {
+            console.log(`Error reading file ${videoPath}.`);
+            console.log(error);
+            res.sendStatus(500);
+        });
+        fileStream.pipe(res);         
+  }else{        
+  // Listing 6.
+  // res.statusCode = start !== undefined || end !== undefined ? 206 : 200;
+  res.statusCode = 206;
+  res.setHeader("content-type", "video/mp4");
+  res.setHeader("content-length", contentLength);
+  res.setHeader("content-range", `bytes ${start}-${end}/${videoSize}`);
+  res.setHeader("accept-ranges", "bytes");
+  console.log(`bytes ${start}-${end}/${videoSize}`)  
+  // Listing 7.
+  const fileStream = fs.createReadStream(videoPath, {start,end});
+  fileStream.on("error", error => {
+      console.log(`Error reading file ${videoPath}.`);
+      console.log(error);
+      res.sendStatus(500);
+  });
+  fileStream.pipe(res);         
+ }
+} 
+function playvideo(req,res,videoPath){
+  // Ensure there is a range given for the video
+  let range = req.headers.range;
+  if (!range) {
+    //res.status(400).send("Requires Range header");
+    range="0";
+  }
+  // get video stats (about 61MB)
+  let videoSize = fs.statSync(videoPath).size;
+  // Parse Range
+  // Example: "bytes=32324-"
+  const CHUNK_SIZE = 10 ** 6; // 1MB
+  const start = Number(range.replace(/\D/g, ""));
+  const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+  // Create headers
+  const contentLength = end - start + 1;
+  console.log(`bytes ${start}-${end}/${videoSize}`,contentLength)
+  let headers = {
+    "Connection":"keep-alive",
+    "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+    "Accept-Ranges": "bytes",
+    "Content-Length": contentLength,
+    "Content-Type": "video/mp4",
+  };
+  // HTTP Status 206 for Partial Content
+  res.writeHead(206, headers);
+  // create video read stream for this particular chunk
+  const videoStream = fs.createReadStream(videoPath, { start, end });
+  // Stream the video chunk to the client
+  videoStream.pipe(res);            
+} 
+///// play video-end
 function hostIP(postData, suburl, response) {
   var os = require('os');
   var ifaces = os.networkInterfaces();
@@ -199,6 +295,24 @@ function hostIP(postData, suburl, response) {
     });
   });
   }
+
+//tools.FileFormRename(file,form_uploadDir)
+function FileFormRename(file,form_uploadDir,cwd_){
+  let ofilename=file.name.replace(/[\/]/g,"___")
+  let file_name_=ofilename.split("___")
+  if(file_name_.length==1){
+    if(file) fs.promises.rename(file.path, path.join(form_uploadDir, ofilename));
+  }else{
+    let sub_path_=file_name_.slice(0,-1);
+    for(let i=0;i<sub_path_.length;i++){
+      let sub_path__=path.join(cwd_,path.join(form_uploadDir, sub_path_.slice(0,i+1).join("/")))
+      if(form_uploadDir.indexOf(":")>-1){ sub_path__=path.join(form_uploadDir, sub_path_.slice(0,i+1).join("/"));}
+      console.log("MAKE Dir",sub_path__)
+      if (!fs.existsSync(sub_path__)){ fs.mkdirSync(sub_path__);  }
+    }
+    if(file) fs.promises.rename(file.path, path.join(form_uploadDir, file.name));
+  }
+}
 module.exports={
     showIface:showIface,
     moveFile:moveFile,
@@ -207,4 +321,7 @@ module.exports={
     files_zip_downloads:files_zip_downloads,
     files_zip_package:files_zip_package,
     hostIP:hostIP,
+    playSafariVideo:playSafariVideo,
+    playvideo:playvideo,
+    FileFormRename:FileFormRename,
 }
