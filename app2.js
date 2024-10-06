@@ -1,53 +1,111 @@
 'use strict'
 const fs = require("fs");
-const staticfile = require('./inc/StaticFile');
 const tools = require('./inc/utils')
 const webfolder = require('./inc/webfolder')
 const formidable = require('formidable');
 const process = require('process');
 const url_utils = require('url');
 const path = require('path');
+const escaptcha = require('./inc/escaptcha');
+
 const uploadDir =process.cwd()+"/www";
 const port = 81;
 const ignore_files=["ignore.txt","app.yaml","config.py","__pycache__","static", "tox.ini","model_cloudsql.py","mySession.1.py","mySession.py","storage.py","main.py","crud.py"]
 var bodyParser = require('body-parser');
 var express = require('express');
 var app = express();
-app.use(express.static(path.join(__dirname, 'public')));
+var serveStatic = require('serve-static')
+//app.use(express.static(path.join(__dirname, 'public')));
+app.use(serveStatic(path.join(__dirname, 'public'), {
+    maxAge: '1d',
+    setHeaders: setCustomCacheControl
+  }))
+function setCustomCacheControl (res, path) {
+    if (serveStatic.mime.lookup(path) === 'text/html') {
+      // Custom Cache-Control for HTML files
+      res.setHeader('Cache-Control', 'public, max-age=0')
+    }
+    else if (serveStatic.mime.lookup(path) === 'text/html') {
+      // Custom Cache-Control for HTML files
+      res.setHeader('Cache-Control', 'public, max-age=0')
+    }
+}  
 app.disable('x-powered-by');
 app.disable('etag');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 app.use(bodyParser.urlencoded({ extended: true }))
 
-//app.use('/internal/photo', require('./routers/photo/api'));
 function checkuser(req) {return true;}
+function getRandomInt(min, max) {
+    const minCeiled = Math.ceil(min);
+    const maxFloored = Math.floor(max);
+    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
+  }
 app.use(function (req, res, next) {
-    if(req.url.indexOf('lite/index.html') > -1){
-        //return webfolder.WebRouter(req,res,uploadDir,"/")
-        return tools.down_pip_file(uploadDir + "/" +req.url,res)
+    if(req.url.indexOf('/ml/captcha') > -1){
+        res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
+        return  res.end(`<img src='${escaptcha.DrawNum(getRandomInt(100,999))}' />`)
     }
-    if(req.url.indexOf('lite/lab/index.html') > -1){
-        //return webfolder.WebRouter(req,res,uploadDir,"/")
-        return tools.down_pip_file(uploadDir + "/" +req.url,res)
-    }
-    if(req.url.startsWith('/lite/') > -1){
-        //return webfolder.WebRouter(req,res,uploadDir,"/")
-        console.log(req.url)
-        return tools.down_pip_file(uploadDir + "/" +req.url.split("?")[0],res)
-    }
+    if(req.url.indexOf('/ml/predict') > -1){
+        let curr_path =decodeURI(uploadDir) ;
+        let form = formidable(
+            {
+                multiples: true,
+                uploadDir: curr_path,
+                keepExtensions: true,
+                maxFileSize: 8000 * 1024 * 1024,
+            }
+        );
+        form.parse(req, (err, fields, files) => {
+            if (err) {
+                console.error(err);
+                res.writeHead(err.httpCode || 400, { 'Content-Type': 'text/plain' });
+                res.end(String(err));
+                return;
+            }
+            console.log(fields)
+            let logfile="predictor.log";
+            let content=JSON.stringify(fields)
+            if(fs.existsSync(logfile)){
+                fs.appendFile(logfile, content , err => {
+                    if (err) {
+                      console.error(err);
+                    } else {
+                      // file written successfully
+                    }
+                  });
+            }else{
+                fs.writeFile(logfile, content, err => {
+                    if (err) {
+                      console.error(err);
+                    } else {
+                      // done!
+                    }
+                  });
+            }
+        });
+        return res.end("OK");
+    }  
+    if(req.url.indexOf('?down&file=') > -1){
+        return webfolder.WebRouter(req,res,uploadDir,"/")
+    }  
     if(req.url.indexOf('?edit&file=') > -1){
         return webfolder.WebRouter(req,res,uploadDir,"/")
     }    
+    if(req.url.startsWith('/lite/') && req.url.length>8){
+        return tools.down_pip_file(uploadDir + "/" +req.url.split("?")[0],res)
+    }
     if(req.url.indexOf("&file=")>-1){
         return next();
-    }
-    let m=req.url.match(/[.](js|html|htm|py|css|txt|jpg|png|ico|zip|tar|csv|pdf|whl|wasm|json|ipynb|webmanifest)$/g);
+    }    
+    let m=req.url.match(/[.](js|mjs|html|htm|py|css|txt|jpg|png|ico|zip|tar|csv|pdf|whl|wasm|json|ipynb|webmanifest)$/g);
     if(m && m.length==1) {    
-        return tools.down_pip_file(uploadDir + "/" +req.url,res)
+        return tools.down_pip_file(uploadDir + "/" +req.url.split("?")[0],res)
     }
     next();
 })
+
 app.use(function (req, res, next) {
     if (!checkuser(req)) return res.end("U are hacker!")
     const { headers, method, url } = req;
@@ -66,7 +124,6 @@ app.use(function (req, res, next) {
         tools.down_pip_file(filepath, res)
         return;
     }
-
     if (req.url.indexOf('/api/SavaData') > -1) {
         res.end(JSON.stringify(req.body));
         return;
@@ -92,62 +149,7 @@ app.use(function (req, res, next) {
             return;
         }
         // Ensure there is a range given for the video
-        let range = req.headers.range;
-        if(!range){range="bytes=0-"}
-        console.log("in",range)
-        // get video stats (about 61MB)
-        let videoSize = fs.statSync(videoPath).size;
-
-        // Parse Range
-        // Example: "bytes=32324-"
-        const CHUNK_SIZE = 10 ** 6; // 1MB
-        const parts = range.split("-");
-        console.log(parts)
-        const start = Number(parts[0].replace(/\D/g, ""));
-        let end = Math.min(start + CHUNK_SIZE, videoSize - 1);
-        if(parts.length>1 && parts[1]!=="" ){
-          end = Number(parts[1].replace(/\D/g, ""));
-          if(end>1) {end = Math.min(start + CHUNK_SIZE, videoSize - 1);}
-        }
-        //Math.min(start + CHUNK_SIZE, videoSize - 1);
-        const contentLength = end - start + 1;
-        // get video stats (about 61MB)
-        if(range=="bytes=0-1"){
-            console.log("0-1")
-
-            res.writeHead(206, {
-                "Connection":"keep-alive",
-                'Accept-Ranges': 'bytes',
-                'Keep-Alive': 'timeout=2, max=100',
-                'Content-Type': "video/mp4",
-                'Content-Range': 'bytes 0-1/' + videoSize,
-                "Content-Length": 2,
-              });
-              const fileStream = fs.createReadStream(videoPath, {start,end});
-              fileStream.on("error", error => {
-                  console.log(`Error reading file ${videoPath}.`);
-                  console.log(error);
-                  res.sendStatus(500);
-              });
-              fileStream.pipe(res);         
-        }else{        
-        // Listing 6.
-        //res.statusCode = start !== undefined || end !== undefined ? 206 : 200;
-        res.statusCode = 206;
-        res.setHeader("content-type", "video/mp4");
-        res.setHeader("content-length", contentLength);
-        res.setHeader("content-range", `bytes ${start}-${end}/${videoSize}`);
-        res.setHeader("accept-ranges", "bytes");
-        console.log(`bytes ${start}-${end}/${videoSize}`)  
-        // Listing 7.
-        const fileStream = fs.createReadStream(videoPath, {start,end});
-        fileStream.on("error", error => {
-            console.log(`Error reading file ${videoPath}.`);
-            console.log(error);
-            res.sendStatus(500);
-        });
-        fileStream.pipe(res);         
-       }
+        return tools.playSafariVideo(req,res,videoPath);
     } 
     else if(req.url.indexOf('/playvideo?file=') > -1){
         let videoPath=null;
@@ -157,37 +159,7 @@ app.use(function (req, res, next) {
         }else{
             return;
         }
-        // Ensure there is a range given for the video
-        let range = req.headers.range;
-        if (!range) {
-          //res.status(400).send("Requires Range header");
-          range="0";
-        }
-        // get video stats (about 61MB)
-        let videoSize = fs.statSync(videoPath).size;
-        // Parse Range
-        // Example: "bytes=32324-"
-        const CHUNK_SIZE = 10 ** 6; // 1MB
-        const start = Number(range.replace(/\D/g, ""));
-        const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
-      
-        // Create headers
-        const contentLength = end - start + 1;
-
-        console.log(`bytes ${start}-${end}/${videoSize}`,contentLength)
-        let headers = {
-          "Connection":"keep-alive",
-          "Content-Range": `bytes ${start}-${end}/${videoSize}`,
-          "Accept-Ranges": "bytes",
-          "Content-Length": contentLength,
-          "Content-Type": "video/mp4",
-        };
-        // HTTP Status 206 for Partial Content
-        res.writeHead(206, headers);
-        // create video read stream for this particular chunk
-        const videoStream = fs.createReadStream(videoPath, { start, end });
-        // Stream the video chunk to the client
-        videoStream.pipe(res);            
+        return tools.playvideo(req,res,videoPath);
     } 
     else if(req.url.indexOf('/pic10')>-1 )
     {
@@ -225,8 +197,6 @@ app.use(function (req, res, next) {
       res.end();
       return;
     }
-    
-    
     else if (req.url.indexOf('/pic') > -1) {
         res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
         res.write(`<meta name="viewport" content="width=device-width, initial-scale=1"></meta>`);
@@ -318,15 +288,6 @@ app.use(function (req, res, next) {
                     }
                     let filepath=curr_path + "/" + query.file
                     fs.writeFileSync(filepath, fields.code)
-                    //let file = files.file1
-                    //if(ignore_files.indexOf(file.name)==-1) {
-                    //let ofilename=file.name.replace(/[/]/g, "---");;
-                    //if (file) fs.promises.rename(file.path, path.join(form.uploadDir, ofilename));
-                    //   res.writeHead(200, { 'Content-Type': 'application/json' });
-                    //   res.end(JSON.stringify({ fields, files }, null, 2));
-                    //}else{
-                    //    res.end("err")
-                    //}
                 });
             }
             res.end(req.body.code)
@@ -367,13 +328,17 @@ app.use(function (req, res, next) {
                 return;
             }
             let file = files.file1
+            if(file){}else{return res.end("err")}
             if(ignore_files.indexOf(file.name)==-1) {
-            let ofilename=file.name.replace(/[/]/g, "---");;
-            if (file) fs.promises.rename(file.path, path.join(form.uploadDir, ofilename));
-               res.writeHead(200, { 'Content-Type': 'application/json' });
-               res.end(JSON.stringify({ fields, files }, null, 2));
+                if(file){
+                    tools.FileFormRename(file,form.uploadDir,process.cwd())
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ fields, files }, null, 2));
+                  }else{
+                    res.end('err')
+                  }
             }else{
-                res.end("err")
+                res.end("err:ignore_files")
             }
         });
         return;
@@ -405,7 +370,7 @@ app.use(function (req, res, next) {
                 //let href_edit=`${req.baseUrl}${encodeURI(subpath)}/edit?file=` + encodeURI(file)
                 //let href_down=`${req.baseUrl}${encodeURI(subpath)}/down?file=` + encodeURI(file)
                 //let href_code=`${req.baseUrl}${encodeURI(subpath)}/code?file=` + encodeURI(file)
-                if(file.indexOf(".py")>-1||file.indexOf(".htm")>-1){
+                if(file.indexOf(".py")>-1||file.indexOf(".htm")>-1||file.indexOf(".ino")>-1){
                    file_list.push(`<div>file:<a href=${href_down}>` + file + `</a>
                    <a href=${href_edit}><button>E</button></a>
                    <a href=${href_code}><button>C</button></a>    (${(file_stat.size / 1000000).toFixed(2)} m )</div>`);
@@ -433,7 +398,6 @@ app.use(function (req, res, next) {
 });
 
 //app.use((req, res) => {	res.status(404).send('Not Found');  });
-
 //app.listen(port, () => {
 //	staticfile.hostIP(); console.log(`Example app listening at http://localhost:${port}`)
 //})
@@ -441,7 +405,5 @@ app.use(function (req, res, next) {
 const server = require('http').createServer(app);
 server.listen(port, function () {	tools.hostIP()	;console.log("server running at https://IP_ADDRESS:", port)});
 
-var myhome_server = require('http').createServer(app);
-myhome_server.listen("80", function() {
-    console.log('Listening on admin port 80' );
-});
+//var myhome_server = require('http').createServer(app);
+//myhome_server.listen("80", function() { console.log('Listening on admin port 80' );});
