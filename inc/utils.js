@@ -1,10 +1,11 @@
-var os = require('os');
+const os = require('os');
 const path = require('path');
 var fs = require("fs");
 const url_utils = require('url');
 const child_process = require('child_process');
+const ifaces = os.networkInterfaces();
+
 function showIface(){
-var ifaces = os.networkInterfaces();
 Object.keys(ifaces).forEach(function (ifname) {
   var alias = 0;
   ifaces[ifname].forEach(function (iface) {
@@ -14,9 +15,8 @@ Object.keys(ifaces).forEach(function (ifname) {
   });
 });
 }
+
 var moveFile = (file, dir2)=>{
-  //include the fs, path modules
-  //gets file name and adds it to dir2
   var f = path.basename(file);
   var dest = path.resolve(dir2, f);
   fs.rename(file, dest, (err)=>{
@@ -24,6 +24,7 @@ var moveFile = (file, dir2)=>{
     else console.log('Successfully moved');
   });
 };
+
 function mimetype(filename) {
     var dotoffset = filename.lastIndexOf('.');
     if (dotoffset == -1)
@@ -122,7 +123,6 @@ function mimetype(filename) {
        '.xml':'application/xml',
        '.xul':'application/vnd.mozilla.xul+xml',
        '.zip':'application/zip',
-      
     };
     //</^[^.]+$|.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|html|xlsx|mjs|webmanifest|properties)$)([^.]+$)/>
     for (var x in mimetype_obj) {
@@ -131,12 +131,14 @@ function mimetype(filename) {
     }
     return "NULL";
   };
+
   function files_zip_package(req, res, folderpath){
     child_process.execSync(`"C:\\Program Files\\7-Zip\\7z.exe"  a -tzip my_package.zip *.py -r -ir!*.txt -ir!*.csv -ir!*.db -xr!*.zip `, {
       cwd: folderpath
     });  
     res.end("my_package.zip")
   }
+
   function files_zip_downloads(req, res, folderpath) {
     // we want to use a sync exec to prevent returning response
     // before the end of the compression process
@@ -151,7 +153,6 @@ function mimetype(filename) {
   
 function down_pip_file (filename,  res) {
   let mimetype_ =  mimetype(filename);
-  
   filename=decodeURI(decodeURI(filename))
   filename=filename.replace(/[/]+/g,"/")
   console.log('read static file_pipe:' + filename);
@@ -166,6 +167,10 @@ function down_pip_file (filename,  res) {
         res.writeHead(200, { 'Content-Type': mimetype_ }); 
       }else{
         res.setHeader('Content-Type', mimetype_ ); 
+        res.setHeader('Cache-Control',  'public, max-age=31536000');//, immutable');
+        res.setHeader('Cross-Origin-Resource-Policy','cross-origin');
+        res.setHeader('Age','29537');
+
         res.setHeader('Content-disposition', 'attachment; filename=' + encodeURI(temp_[temp_.length-1]));
       }
       fs.createReadStream(filename).pipe(res);
@@ -178,9 +183,8 @@ function down_pip_file (filename,  res) {
     console.log(err);
   }
 };
-function hostIP(postData, suburl, response) {
-  var os = require('os');
-  var ifaces = os.networkInterfaces();
+
+function hostIP() {
   Object.keys(ifaces).forEach(function (ifname) {
     var alias = 0;
     ifaces[ifname].forEach(function (iface) {
@@ -199,6 +203,7 @@ function hostIP(postData, suburl, response) {
     });
   });
   }
+
 module.exports={
     showIface:showIface,
     moveFile:moveFile,

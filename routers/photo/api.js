@@ -8,7 +8,10 @@ const opt={uploadDir : 'www', title:"PhotoDir"}
 function checkuser(req) {
     return true;   //return config.checkuser(req);
 }
-
+router.use((req,res,next)=>{
+    res.set('Content-Type', 'text/html; charset=utf-8');
+next();
+})
 router.get('/',  (req, res, next) => {
     res.render('Photo/index.pug', {
         profile: req.user,

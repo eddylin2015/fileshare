@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+html
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1, shrink-to-fit=no")
+    //script(src="https://cdn.jsdelivr.net/npm/jquery")
+    //script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.32.0/js/jquery.terminal.min.js"></script>
+    //script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.23.0/js/unix_formatting.min.js"></script>
+    //link(href="https://cdn.jsdelivr.net/npm/jquery.terminal@2.32.0/css/jquery.terminal.min.css",rel="stylesheet")
+    //<script src="https://cdn.jsdelivr.net/pyodide/v0.21.1/full/pyodide.js"></script>
+    link(rel="stylesheet", href="https://codemirror.net/5/lib/codemirror.css")
+    script(src="https://codemirror.net/5/lib/codemirror.js")
+    script(src="https://codemirror.net/5/mode/xml/xml.js")
+    style.
+      body{padding: 0%;}
+      div {font-size: 20px;}
+      .CodeMirror {
+        /*font-family: Arial, monospace;*/
+        font-size: 20px;
+        height: auto;
+      }
+  body
+    form#codeform(method="POST")
+      textarea#code1(name="code", cols="30", rows="10",style="width: 800px; height: 600px; border: 1px solid grey")= code
+      input(type="button", value="save",onclick="SaveRun();")
+    script.
+      var code_list=["code1"];
+      var editors=[];
+      for(let code_ of code_list){
+        let editor1 = CodeMirror.fromTextArea(document.getElementById(code_), {
+          mode: "xml",
+          htmlMode:true,
+          lineNumbers: true,
+          indentUnit: 4,
+          matchBrackets: true,
+          viewportMargin: Infinity
+        });
+        editors.push(editor1);
+      }
+      function SaveRun(){
+        for(let editor1 of editors)
+          editor1.save()
+        document.getElementById('codeform').submit();
+        //var formData = new FormData();
+        //formData.append("code", editor.getValue());
+        //var url_  =  "!{posturl}".replace("//code?","/code?")
+        //var xmlHttp = new XMLHttpRequest();
+        //    xmlHttp.onreadystatechange = function()
+        //    {
+        //        if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
+        //        {
+        //            alert(xmlHttp.responseText);
+        //        }
+        //    }
+        //xmlHttp.open("post", url_, true); 
+        //xmlHttp.send(formData)
+      }      

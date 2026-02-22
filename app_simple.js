@@ -245,7 +245,7 @@ if (cluster.isMaster) {
     }
   // 通知 master 进程接收到了请求
     process.send({ cmd: 'notifyRequest' });
-  }).listen(81);
+  }).listen(82);
 }
 
 //https://nodejs.org/en/knowledge/HTTP/servers/how-to-handle-multipart-form-data/

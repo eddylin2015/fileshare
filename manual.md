@@ -1,7 +1,7 @@
 # fileshare
 
-mytemp
-tmp
+私有雲: 檔案, 串流, pylab教學
+
 www
 
 npm init

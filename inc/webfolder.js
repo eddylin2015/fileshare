@@ -378,7 +378,7 @@ function WebRouter(req, res, FileShare_path = "", base_url = "") {
         res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
         return res.end(htmlcode.replace("!{code}", code))
     }
-    if (req.url.match(/[.](js|htm|py|css|txt|jpg|png|ico|zip|csv|pdf)$/g)) {
+    if (req.url.match(/[.](js|mjs|htm|py|css|txt|jpg|png|ico|zip|csv|pdf)$/g)) {
       let filepath = uploadDir + "/" + decodeURI(decodeURI(req.url));
       return tools.down_pip_file(filepath.replace(/[/]+/g, "/"), res)
     }

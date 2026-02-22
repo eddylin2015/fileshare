@@ -1,0 +1,33 @@
+doctype html
+html
+  head
+    title= title
+    link(rel="icon" href="/favicon.ico")
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no")
+    link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
+    link(rel='stylesheet', href='/stylesheets/signin.css')
+    link(rel='stylesheet', href='/stylesheets/main.css')
+    script(src='/javascripts/jquery.js')
+    script(src='/javascripts/bootstrap.js')
+  body
+    <div class="container">
+
+      <form class="form-signin" action="/auth/login?redirect=#{redirect}" method="post">
+        <h2 class="form-signin-heading">Please sign in</h2>
+        <label for="inputEmail" class="sr-only">User</label>
+        <input type="text" id="inputEmail" class="form-control" name=username placeholder="User" value="#{puser}" required autofocus>
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" id="inputPassword" class="form-control" name=password placeholder="Password" value="#{ppwd}" required>
+        <input type="hidden" name=redirect value="#{redirect}">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" value="remember-me"> Remember me
+          </label>
+        </div>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+      </form>
+
+    </div> <!-- /container -->
+  </body>
+</html>

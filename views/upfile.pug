@@ -55,8 +55,7 @@
         ajax.addEventListener("load", completeHandler, false);
         ajax.addEventListener("error", errorHandler, false);
         ajax.addEventListener("abort", abortHandler, false);
-        ajax.open("POST", "file_upload_parser.php"); // http://www.developphp.com/video/JavaScript/File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP
-        //use file_upload_parser.php from above url
+        ajax.open("POST", "file_upload_parser.php"); 
         ajax.send(formdata);
       }
     }
@@ -111,9 +110,15 @@ div.grid-container
     a(href="/")
       button 
         h4 Home 
-    a(href="/down?file=index.html")
+    a(href="/index.html")
       button 
         h4 Home page 
+    a(href="/GCFin")
+      button 
+        h4 GCFin
+    a(href="/NewUI/")
+      button 
+        h4 NewUI
     h2 HTML5 File Upload</h2>
     h4 目錄(構建中)
     input(type="file", id="filepicker", name="fileList", webkitdirectory, multiple)
@@ -137,7 +142,6 @@ div.grid-container
     div /dir
     div /pic
     div /makedir?dirname=folder_name
-
 script.
     filepicker_file_id=0
     filepicker_files=null;
@@ -145,7 +149,6 @@ script.
         console.log(i)
         if(i<=0) return null;
         let file=files[i-1]
-
         console.log(file);
         flag=chechfile(code,file)
         console.log("a",flag)
@@ -155,7 +158,6 @@ script.
           filepickeruploadFile(filepicker_files,filepicker_file_id)
           return;
         }        
-
         var formdata = new FormData();
         formdata.append("file1", file);
         var ajax = new XMLHttpRequest();
@@ -163,8 +165,7 @@ script.
         ajax.addEventListener("load", filepickercompleteHandler, false);
         ajax.addEventListener("error", errorHandler, false);
         ajax.addEventListener("abort", abortHandler, false);
-        ajax.open("POST", "file_upload_parser.php"); // http://www.developphp.com/video/JavaScript/File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP
-        //use file_upload_parser.php from above url
+        ajax.open("POST", "file_upload_parser.php"); // File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP
         ajax.send(formdata);      
     }
     function filepickercompleteHandler(event) {
@@ -178,7 +179,6 @@ script.
     document.getElementById("filepicker").addEventListener("change", function(event) {
       let output = document.getElementById("listing");
       filepicker_files = event.target.files;
-  
       for (let i=0; i<filepicker_files.length; i++) {
         let item = document.createElement("li");
         item.innerHTML = filepicker_files[i].webkitRelativePath;
@@ -192,8 +192,6 @@ script.
         filepickeruploadFile(filepicker_files,filepicker_file_id)
       }
     }, false);
-
-
 
 </body>
 

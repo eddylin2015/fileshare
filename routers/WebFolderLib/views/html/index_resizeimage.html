@@ -1,0 +1,226 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="robots" content="noindex">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script>
+        function PadStr(x, l) { x = x.toString(); return x.padStart(l - x.length, "0"); }
+        function getMillisecond() { let d = new Date(); return d.toLocaleString('sv').replace(/[ :]/g, "") + PadStr(d.getMilliseconds(), 4); }
+        function insertCanvas(_w, _h) {
+            var mainCanvas = document.createElement('canvas');
+            mainCanvas.width = _w;
+            mainCanvas.height = _h;
+            document.body.appendChild(mainCanvas);
+            return mainCanvas;
+        }
+        var postUrl = "file_upload_parser.php";
+        function formreset() { _("upload_form").reset(); }
+        function IsSafari() {
+            var is_safari = navigator.userAgent.toLowerCase().indexOf('safari/') > -1;
+            return is_safari;
+        }
+        function _(el) {
+            return document.getElementById(el);
+        }
+        var file_id = 0;
+        const max_compress_size_=2 * 1024 * 1024;
+        function CalcRate(img, max_compress_size_, max_range=1048, min_range=1024){
+          let w_ = img.width ;
+          let h_ = img.height ;
+          let max_=w_ >h_?w_:h_;
+          let min_=w_ <h_?w_:h_;
+          let r_1=max_range /  max_* 1.0
+          let r_2=min_range /  min_* 1.0
+          let r_=r_1>r_2?r_1:r_2;
+          if(r_>1) return 1;
+          return r_
+        }  
+        function uploadResizeImageFile(fileid = 0, postUrl = "file_upload_parser.php") {
+            file_id = fileid
+            if (_("file1").files.length > file_id)  //one by one
+            {
+                file = _("file1").files[file_id];
+                if (file.type.indexOf("image/") == -1) { alert(`錯誤:${file.type}`); return; }
+                if (file.size > 6 * 1024 * 1024) { alert(`錯誤:圖片${file.size}超過500K`); return; }
+                var img = new Image();
+                img.onload = function () {
+                    let r_=CalcRate(img, max_compress_size_)
+                    let w_=img.width*r_ ;
+                    let h_=img.height*r_ ;
+                    let imgcanvs = insertCanvas(Math.floor(w_), Math.floor(h_))
+                    let imgctx = imgcanvs.getContext("2d");
+                    imgctx.drawImage(img, 0, 0, Math.floor(w_), Math.floor(h_));
+                    imgcanvs.toBlob(blob => {
+                        console.log(file.name, file.type)
+                        let file_ = new File([blob], file.name,{type:file.type});
+                        file_.type=file.type;
+                        console.log(file_)
+                        var formdata = new FormData();
+                        formdata.append("file1", file_);
+                        var ajax = new XMLHttpRequest();
+                        ajax.upload.addEventListener("progress", progressHandler, false);
+                        ajax.addEventListener("load", completeHandler, false);
+                        ajax.addEventListener("error", errorHandler, false);
+                        ajax.addEventListener("abort", abortHandler, false);
+                        ajax.open("POST", postUrl);
+                        ajax.send(formdata);
+                    }, "image/jpeg", 0.95);
+                }
+                img.src = window.URL.createObjectURL(file);
+                document.body.appendChild(img);
+            }
+        }
+        function uploadOriFile(fileid = 0) {
+            file_id = fileid
+            console.log(_("file1").files.length)
+            //for (file of _("file1").files) {
+            if (_("file1").files.length > file_id) {
+                file = _("file1").files[file_id]
+                //var file = _("file1").files[0]; console.log(file.name+" | "+file.size+" | "+file.type);
+                var formdata = new FormData();
+                formdata.append("file1", file);
+                var ajax = new XMLHttpRequest();
+                ajax.upload.addEventListener("progress", progressHandler, false);
+                ajax.addEventListener("load", completeHandler, false);
+                ajax.addEventListener("error", errorHandler, false);
+                ajax.addEventListener("abort", abortHandler, false);
+                ajax.open("POST", "file_upload_parser.php"); // http://www.developphp.com/video/JavaScript/File-Upload-Progress-Bar-Meter-Tutorial-Ajax-PHP
+                ajax.send(formdata);
+            }
+        }
+        const uploadFile=uploadResizeImageFile;
+        function progressHandler(event) {
+            _("loaded_n_total").innerHTML = "Uploaded " + event.loaded + " bytes of " + event.total;
+            var percent = (event.loaded / event.total) * 100;
+            _("progressBar").value = Math.round(percent);
+            _("status").innerHTML = Math.round(percent) + "% uploaded... please wait";
+        }
+
+        function completeHandler(event) {
+            _("status").innerHTML = event.target.responseText;
+            _('status_file_list').innerHTML += JSON.parse(event.target.responseText).files.file1.name + '<br>';
+            _("progressBar").value = 0; //wil clear progress bar after successful upload
+            file_id++
+            uploadFile(file_id)
+        }
+
+        function errorHandler(event) {
+            _("status").innerHTML = "Upload Failed";
+        }
+
+        function abortHandler(event) {
+            _("status").innerHTML = "Upload Aborted";
+        }
+    </script>
+
+</head>
+
+<body>
+    <a href="/"><button id="ajaxButton_return" type="button">cd \</button></a>
+    <button id="ajaxButton_parent" type="button">cd ..</button>
+    <a href=ls>list files. </a>
+    <span>CMD:</span>
+    <button id="ajaxButton_md" type="button">md %s</button>
+    <button id="ajaxButton_mov" type="button">mov %s %s</button>
+    <button id="ajaxButton_movall" type="button">movall MT</button>
+    <button id="ajaxButton_del" type="button">del %s</button>
+    <h2>HTML5 File Upload :/MT/ scale image</h2>
+    <form id="upload_form" enctype="multipart/form-data" method="post">
+        <input type="file" name="file1" id="file1" onchange="uploadFile()" multiple="multiple"><br>
+        <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
+        <h3 id="status"></h3>
+        <p id="loaded_n_total"></p>
+    </form>
+    <div id=status_file_list> </div>
+    <div id="ls_ctx">
+
+    </div>
+    <button id="ajaxButton_dir" type="button">dir</button>
+    <button id="ajaxButton_pic" type="button">pic</button>
+
+
+    <script>
+        (() => {
+            let httpRequest;
+            document.getElementById("ajaxButton_parent")
+                .addEventListener("click", gotoParentDir);
+            document.getElementById("ajaxButton_md")
+                .addEventListener("click", makeRequest_md);
+            document.getElementById("ajaxButton_movall")
+                .addEventListener("click", makeRequest_movallfiles);
+
+                
+            document.getElementById("ajaxButton_dir")
+                .addEventListener("click", makeRequest);
+            document.getElementById("ajaxButton_pic")
+                .addEventListener("click", makeRequest_pic);
+            function gotoParentDir() {
+                let url_ = window.location.href.split("/");
+                let parentdir = "/"
+                for (let i = 1; i < url_.length - 2; i++) parentdir += url_[i] + "/"
+                window.location.href = parentdir;
+            }
+            function makeRequest() {
+                httpRequest = new XMLHttpRequest();
+
+                if (!httpRequest) {
+                    alert("Giving up :( Cannot create an XMLHTTP instance");
+                    return false;
+                }
+                httpRequest.onreadystatechange = alertContents;
+                httpRequest.open("GET", "dir");
+                httpRequest.send();
+            }
+            function makeRequest_pic() {
+                httpRequest = new XMLHttpRequest();
+
+                if (!httpRequest) {
+                    alert("Giving up :( Cannot create an XMLHTTP instance");
+                    return false;
+                }
+                httpRequest.onreadystatechange = alertContents;
+                httpRequest.open("GET", "pic");
+                httpRequest.send();
+            }
+            function makeRequest_md() {
+                let newfolder = prompt("Please enter foldername", "newfolder");
+                if (newfolder != null) {
+                    httpRequest = new XMLHttpRequest();
+                    if (!httpRequest) {
+                        alert("Giving up :( Cannot create an XMLHTTP instance");
+                        return false;
+                    }
+                    httpRequest.onreadystatechange = alertContents;
+                    httpRequest.open("GET", "makedir?dirname=" + newfolder);
+                    httpRequest.send();
+                }
+            }
+            function makeRequest_movallfiles() {
+                let newfolder = prompt("Please enter foldername", "newfolder");
+                if (newfolder != null) {
+                    httpRequest = new XMLHttpRequest();
+                    if (!httpRequest) {
+                        alert("Giving up :( Cannot create an XMLHTTP instance");
+                        return false;
+                    }
+                    httpRequest.onreadystatechange = alertContents;
+                    httpRequest.open("GET", "movallfiles?dirname=" + newfolder);
+                    httpRequest.send();
+                }
+            }
+            function alertContents() {
+                if (httpRequest.readyState === XMLHttpRequest.DONE) {
+                    if (httpRequest.status === 200) {
+                        document.getElementById("ls_ctx").innerHTML = httpRequest.responseText;
+                    } else {
+                        alert("There was a problem with the request.");
+                    }
+                }
+            }
+        })();
+    </script>
+    <div>MT0000.jpg / SN0000.jpg. moveall to MT folder.</div>
+</body>
+
+</html>

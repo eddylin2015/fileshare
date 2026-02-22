@@ -1,0 +1,55 @@
+const FS = require('fs');
+const HTTP = require('http')
+const PORT = 8888
+const SERVER= HTTP.createServer(requestListener)
+SERVER.listen(PORT, listenCallback)
+
+// 监听的回调
+function listenCallback(){
+    console.log('server run at 127.0.0.1:8888')
+}
+
+// 请求监听器
+function requestListener(incomingMessage, serverResponse){
+    
+    // header
+    const headers = incomingMessage.headers
+    const fileName = headers['file-name']
+    
+    // 获取post传递过来的数据
+    const _data = []
+    incomingMessage.on('data' , chunk => {
+        _data.push(...chunk)
+    })
+
+    incomingMessage.on('end', () => {
+        let arr = new Uint8Array(_data)
+        // 写入文件
+        // 如果没有就创建文件
+        FS.writeFile(
+            `./server/${fileName}`,
+            arr,
+            createWriteFileCallback(serverResponse)
+        )
+    })
+}
+
+// 写入文件回调
+function createWriteFileCallback(serverResponse){
+    return function (err){
+        if(err === null){
+            console.log('写入文件成功')
+            serverResponse.write(
+                JSON.stringify({
+                    status: 0,
+                    message: "ok",
+                    data: null
+                }),
+                "utf8"
+            )
+            serverResponse.end()
+        }else{
+            console.log('写入文件失败: ', err)
+        }
+    }
+}

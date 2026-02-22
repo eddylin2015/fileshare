@@ -6,7 +6,7 @@ var http = require('http');
 const path = require('path');
 var Static_File = (function () {
     function Static_File() {
-    }
+    };
     Static_File._out = function (fs, filename, mimetype, res, jsonObject) {
         console.log('read static file' + filename);
         try {
@@ -26,7 +26,7 @@ var Static_File = (function () {
                     }
                     res.write(sdata);
                     res.end();
-			console.log('end ' + filename);
+                    console.log('end ' + filename);
                     return;
                 });
             }
@@ -98,10 +98,10 @@ var Static_File = (function () {
     Static_File.uploadfile = function (dir, form, req, res) {
         form.parse(req, (err, fields, files) => {
             if (err) {
-              console.error(err);
-              res.writeHead(err.httpCode || 400, { 'Content-Type': 'text/plain' });
-              res.end(String(err));
-              return;
+                console.error(err);
+                res.writeHead(err.httpCode || 400, { 'Content-Type': 'text/plain' });
+                res.end(String(err));
+                return;
             }
             if (fields.logout == "logout") {
                 res.statusCode = 401;
@@ -116,21 +116,21 @@ var Static_File = (function () {
             }
             else {
                 filelist.push(files.upload);
-            }                     
+            }
             res.writeHead(200, {
                 'Content-Type': 'text/plain; charset=utf-8',
                 'Transfer-Encoding': 'chunked',
                 'X-Content-Type-Options': 'nosniff'
             });
-            for(file of files.upload){
-                if(file) fs.promises.rename(file.path, path.join(form.uploadDir, file.name));
+            for (file of files.upload) {
+                if (file) fs.promises.rename(file.path, path.join(form.uploadDir, file.name));
                 res.write(file.name + "\n");
                 //res.flush();
             }
             res.end();
-          });
-          return;		
-     
+        });
+        return;
+
     };
     Static_File.uploadphp = function (dir, auth_username, req, res) {
         res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
@@ -170,7 +170,6 @@ var Static_File = (function () {
     };
     ////////////////
     Static_File.api_host = '192.168.101.250';
-    //Static_File.api_host='192.168.102.17';
     Static_File.postdata_str = function (postData, suburl, response) {
         var options = {
             hostname: Static_File.api_host, port: 8081,
@@ -198,9 +197,6 @@ var Static_File = (function () {
         req.write(postData);
         req.end();
     };
-    /////////////
-    
-    ////////////////
     Static_File.postdata = function (postData, suburl, response) {
         var options = {
             hostname: Static_File.api_host,
@@ -231,30 +227,31 @@ var Static_File = (function () {
     };
 
     Static_File.hostIP = function (postData, suburl, response) {
-    var os = require('os');
-    var ifaces = os.networkInterfaces();
-    Object.keys(ifaces).forEach(function (ifname) {
-      var alias = 0;
-      ifaces[ifname].forEach(function (iface) {
-        if ('IPv4' !== iface.family || iface.internal !== false) {
-          // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-          return;
-        }
-        if (alias >= 1) {
-          // this single interface has multiple ipv4 addresses
-          console.log(ifname + ':' + alias, iface.address);
-        } else {
-          // this interface has only one ipv4 adress
-          console.log(ifname, iface.address);
-        }
-        ++alias;
-      });
-    });
+        var os = require('os');
+        var ifaces = os.networkInterfaces();
+        Object.keys(ifaces).forEach(function (ifname) {
+            var alias = 0;
+            ifaces[ifname].forEach(function (iface) {
+                if ('IPv4' !== iface.family || iface.internal !== false) {
+                    // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+                    return;
+                }
+                if (alias >= 1) {
+                    // this single interface has multiple ipv4 addresses
+                    console.log(ifname + ':' + alias, iface.address);
+                } else {
+                    // this interface has only one ipv4 adress
+                    console.log(ifname, iface.address);
+                }
+                ++alias;
+            });
+        });
     }
-
     return Static_File;
 }());
+
 module.exports = Static_File;
+
 /*
 var walkSync = function(dir, filelist) {
   var fs = fs || require('fs'),
@@ -270,10 +267,4 @@ var walkSync = function(dir, filelist) {
   });
   return filelist;
 };
-/////////////////
-    if (req.url.startsWith('/.well-known/acme-challenge/pWWkRfZfiHxiH-oHMWe7HbH9iGb5HdaMcU331opa2z0'))
-    {
-        staticfile._pipe('pWWkRfZfiHxiH-oHMWe7HbH9iGb5HdaMcU331opa2z0',mimetype,res);
-        return;
-    }
-    */
+*/

@@ -1,0 +1,34 @@
+a.test { font-weight: bold; }
+table  {
+    border: 1px solid black;
+}
+table tr.even {
+    background: #CCC;
+}
+table td.checkitem {
+    background: #bbbbff;
+}
+td.ID_EDU_TD , td.ID_TT_TD , td.ID_CD_TD , td.ID_TE_TD , td.ID_WE_TD
+{
+    font-weight: bold;
+}
+td.DEL_ID_EDU_TD 
+{
+    font-weight: normal;
+    color:red;
+    text-decoration: line-through;
+}
+span.ADDROW_FONT{
+    font-weight: normal;
+    color:blue;
+    font-size:x-small;
+    position:absolute;
+}
+.checkbox, .radio {
+    width: 19px;
+    height: 25px;
+    padding: 0 5px 0 0;
+    display: block;
+    clear: left;
+    float: left;
+}
