@@ -222,6 +222,7 @@ app.use(function (req, res, next) {
         });
         fileStream.pipe(res);         
        }
+       //return tools.playSafariVideo(req,res,videoPath);
     } 
     else if(req.url.indexOf('/playvideo?file=') > -1){
         let videoPath=null;
@@ -231,37 +232,7 @@ app.use(function (req, res, next) {
         }else{
             return;
         }
-        // Ensure there is a range given for the video
-        let range = req.headers.range;
-        if (!range) {
-          //res.status(400).send("Requires Range header");
-          range="0";
-        }
-        // get video stats (about 61MB)
-        let videoSize = fs.statSync(videoPath).size;
-        // Parse Range
-        // Example: "bytes=32324-"
-        const CHUNK_SIZE = 10 ** 6; // 1MB
-        const start = Number(range.replace(/\D/g, ""));
-        const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
-      
-        // Create headers
-        const contentLength = end - start + 1;
-
-        console.log(`bytes ${start}-${end}/${videoSize}`,contentLength)
-        let headers = {
-          "Connection":"keep-alive",
-          "Content-Range": `bytes ${start}-${end}/${videoSize}`,
-          "Accept-Ranges": "bytes",
-          "Content-Length": contentLength,
-          "Content-Type": "video/mp4",
-        };
-        // HTTP Status 206 for Partial Content
-        res.writeHead(206, headers);
-        // create video read stream for this particular chunk
-        const videoStream = fs.createReadStream(videoPath, { start, end });
-        // Stream the video chunk to the client
-        videoStream.pipe(res);            
+        return tools.playvideo(req,res,videoPath);
     } 
     else if(req.url.indexOf('/pic10')>-1 )
     {
@@ -390,15 +361,6 @@ app.use(function (req, res, next) {
                     }
                     let filepath=curr_path + "/" + query.file
                     fs.writeFileSync(filepath, fields.code)
-                    //let file = files.file1
-                    //if(ignore_files.indexOf(file.name)==-1) {
-                    //let ofilename=file.name.replace(/[/]/g, "---");;
-                    //if (file) fs.promises.rename(file.path, path.join(form.uploadDir, ofilename));
-                    //   res.writeHead(200, { 'Content-Type': 'application/json' });
-                    //   res.end(JSON.stringify({ fields, files }, null, 2));
-                    //}else{
-                    //    res.end("err")
-                    //}
                 });
             }
             res.end(req.body.code)
@@ -441,31 +403,13 @@ app.use(function (req, res, next) {
             let file = files.file1
             if(file){}else{return res.end("err")}
             if(ignore_files.indexOf(file.name)==-1) {
-                ////modify 241003
                 if(file){
-                    let ofilename=file.name.replace(/[\/]/g,"___")
-                    let file_name_=ofilename.split("___")
-                    if(file_name_.length==1){
-                      if(file) fs.promises.rename(file.path, path.join(form.uploadDir, ofilename));
-                    }else{
-                      let sub_path_=file_name_.slice(0,-1);
-                      for(let i=0;i<sub_path_.length;i++){
-                        let sub_path__=path.join(cwd(),path.join(form.uploadDir, sub_path_.slice(0,i+1).join("/")))
-                        if(form.uploadDir.indexOf(":")>-1)
-                          sub_path__=path.join(form.uploadDir, sub_path_.slice(0,i+1).join("/"))
-                        console.log("MAKE Dir",sub_path__)
-                        if (!fs.existsSync(sub_path__)){
-                          fs.mkdirSync(sub_path__);
-                        }
-                      }
-                      if(file) fs.promises.rename(file.path, path.join(form.uploadDir, file.name));
-                    }
+                    tools.FileFormRename(file,form.uploadDir,process.cwd())
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ fields, files }, null, 2));
                   }else{
                     res.end('err')
                   }
-               ////end 241003
             }else{
                 res.end("err:ignore_files")
             }
@@ -526,7 +470,7 @@ app.use(function (req, res, next) {
     }
 });
 
-//app.use((req, res) => { res.status(404).send('Not Found'); });
+//app.use((req, res) => {	res.status(404).send('Not Found');  });
 //app.listen(port, () => {
 //	tools.hostIP(); console.log(`running at http://localhost:${port}`)
 //})
