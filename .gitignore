@@ -69,6 +69,8 @@ public/pyodide/
 public/stylesheets/
 public/a.html
 public/a.xml
+public/javascripts/canvas-datagrid/
+public/javascripts/xlsx/
 secret/
 predictor.json
 ecosystem.config.js

@@ -6,7 +6,11 @@ block content
     table
       each row in books 
         tr 
-          each elm in row.slice(0,-1) 
-            td= elm
+          each elm,eidx in row.slice(0,-1) 
+            if eidx==1 
+              td  
+                a(href=`/GCFin/${elm.replace(":","_")}`)= elm
+            else 
+              td= elm
   script.
     console.log("ok!")

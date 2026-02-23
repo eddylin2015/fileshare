@@ -21,14 +21,61 @@ html(lang="zh")
     link(rel="stylesheet", href="/stylesheets/css/bootstrap.min.css")
     script(src='/javascripts/jquery.js')
     script(src='/javascripts/bootstrap.js')
+    script(src="/javascripts/xlsx/xlsx.full.min.js")
     script(src="/javascripts/cool/table2csv.js")
+    
     style.
       .container{width:100%}
       td{padding-right:2px;}
     script.
       window.addEventListener('load', function() {
+        
+        $("#ex_sheet").on('click', function(event) {
+          var table = document.querySelector('div#divid > table');
+          var rows = [];
+          for (var i = 0, row; row = table.rows[i]; i++) {
+            let cols = []
+            for (var j = 0; j < row.cells.length; j++) {
+              if (row.cells[j].innerText && row.cells[j].innerText.indexOf(",") > -1) { cols.push(`"${row.cells[j].innerText.replace(/"/g, "'")}"`); }
+              else {
+                cols.push(row.cells[j].innerText);
+              }
+            }
+            rows.push(cols);
+          }
+          (async () => {
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+            XLSX.writeFile(wb, "FIN#{date_str}.xlsx");
+          })();
+        });
         $("#ex_csv").on('click', function(event) {
           exportTableToCSV.apply(this, [$('#divid>table'), 'FIN_#{date_str}.csv']);
+        });
+        $("#ex_html").on('click', function(event) {
+          var universalBOM = "\uFEFF";
+          var txt= document.getElementById("divid").innerHTML;
+          var htmls = "";
+          var uri = 'data:application/vnd.ms-excel;charset=UTF-8;base64,';
+          var template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>'; 
+          var base64 = function(s) {
+            return window.btoa(unescape(encodeURIComponent(s)))
+          };
+          var format = function(s, c) {
+              return s.replace(/{(\w+)}/g, function(m, p) {
+                return c[p];
+              })
+          };
+          htmls = txt;
+          var ctx = {
+            worksheet : 'Worksheet',
+            table : htmls
+          }
+          var link = document.createElement("a");
+          link.download = "FIN#{date_str}.xls";
+          link.href = uri + base64(format(template, ctx));
+          link.click();
         });
         $('td').filter(function () {return this.innerHTML.match(/^[-]*[0-9\s\.,]+$/);}).css('text-align', 'right'); 
       }); 
@@ -49,7 +96,7 @@ html(lang="zh")
             a(href="/") 
               span(class="glyphicon") &#xe021
           li
-            a(href="#") 列表
+            a(href="/GCFin") 資訊
           li
             a(href="#") 我的列表
           li(class="dropdown")

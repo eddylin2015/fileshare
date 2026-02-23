@@ -1,0 +1,12 @@
+
+extends ./base.pug
+
+block content
+  div#divid
+    table
+      each row in books 
+        tr 
+          each elm in row.slice(0,-1) 
+            td= elm
+  script.
+    console.log("ok!")

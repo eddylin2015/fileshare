@@ -18,6 +18,12 @@ const GCPSheet_Renderer = edge.func({
     methodName: 'Excel2Csv'
 });
 
+const GCPSheetByParams_Renderer = edge.func({
+    assemblyFile: path.resolve(__dirname, "/code/Ex2511/WindowsFormsApp1/GPCRender/bin/Debug/GPCRender.dll"),
+    typeName: 'GPCRender.SheetRender',
+    methodName: 'Excel2CsvByTicket'
+});
+
 router.use((req, res, next) => {
     res.set('Content-Type', 'text/html; charset=utf-8');
     next();
@@ -39,12 +45,58 @@ router.get('/DRV', (req, res, next) => {
 
 router.get('/', (req, res, next) => {
     const spreadsheetId = "1GMVVwNNDQy7zAb7JusUGiHs4opVsMiYjt_OlsRfRH3Y"; // Replace with your actual Spreadsheet ID
-    const range = "工作表1!A1:Z78"; // Replace with your actual sheet name and range (A1 notation)
+    const range = "工作表1!A1:Z178"; // Replace with your actual sheet name and range (A1 notation)
     GCPSheet_Renderer({ spreadsheetId: spreadsheetId, range: range }, (error, result) => {
         if (error) return console.log(error);
         let d = new Date().toLocaleString('sv').replace(/[: -]/g, "");
         let resultobj = JSON.parse(result);
         res.render('GCFin/table.pug', {
+            books: resultobj,
+            date_str: d,
+        })
+        //res.write("<table>")
+        //for(let row of resultobj){
+        //    res.write("<tr><td>")
+        //    res.write(row.join("<td>"))
+        //}
+        //res.end("</table>")
+    });
+});
+
+router.get('/:ticket', (req, res, next) => {
+    let  ticket=req.params.ticket.replace("_",":")
+    const spreadsheetId = "1GMVVwNNDQy7zAb7JusUGiHs4opVsMiYjt_OlsRfRH3Y"; // Replace with your actual Spreadsheet ID
+    const range = `HISTORY!A1:Z400`; // Replace with your actual sheet name and range (A1 notation)
+    GCPSheetByParams_Renderer({ 
+        spreadsheetId: spreadsheetId, 
+        range: range,
+        updrange:"HISTORY!A1",
+        updvalue:ticket }, (error, result) => {
+        if (error) return console.log(error);
+        let d = new Date().toLocaleString('sv').replace(/[: -]/g, "");
+        let resultobj = JSON.parse(result);
+        res.render('GCFin/table_.pug', {
+            books: resultobj,
+            date_str: d,
+        })
+        //
+        //res.write("<table>")
+        //for(let row of resultobj){
+        //    res.write("<tr><td>")
+        //    res.write(row.join("<td>"))
+        //}
+        //res.end("</table>")
+    });
+});
+router.get('/sheetname/:ticket', (req, res, next) => {
+    let  ticket=req.params.ticket.replace("_",":")
+    const spreadsheetId = "1GMVVwNNDQy7zAb7JusUGiHs4opVsMiYjt_OlsRfRH3Y"; // Replace with your actual Spreadsheet ID
+    const range = `${ticket}!A1:Z400`; // Replace with your actual sheet name and range (A1 notation)
+    GCPSheet_Renderer({ spreadsheetId: spreadsheetId, range: range }, (error, result) => {
+        if (error) return console.log(error);
+        let d = new Date().toLocaleString('sv').replace(/[: -]/g, "");
+        let resultobj = JSON.parse(result);
+        res.render('GCFin/table_.pug', {
             books: resultobj,
             date_str: d,
         })
