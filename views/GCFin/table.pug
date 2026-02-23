@@ -4,12 +4,18 @@ extends ./base.pug
 block content
   div#divid
     table
-      each row in books 
+      each row,ridx in books 
         tr 
           each elm,eidx in row.slice(0,-1) 
-            if eidx==1 
+            if eidx==1 && ridx>0
+              - let elmm=elm.split(":")
               td  
-                a(href=`/GCFin/${elm.replace(":","_")}`)= elm
+                a(href=`/GCFin/${elm}`)= elm
+
+                small 
+                  a(href=`https://www.google.com/finance/quote/${elmm[1]}:${elmm[0]}`) g
+                small 
+                  a(href=`http://www.aastocks.com/tc/stocks/quote/quick-quote.aspx?symbol=${Number(elmm[1])}`) a
             else 
               td= elm
   script.
