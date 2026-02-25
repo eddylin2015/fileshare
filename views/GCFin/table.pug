@@ -7,15 +7,29 @@ block content
       each row,ridx in books 
         tr 
           each elm,eidx in row.slice(0,-1) 
-            if eidx==1 && ridx>0
+
+            if eidx==0 && ridx>0
+              if row[3].startsWith('-') 
+                td(style="color:red")= elm
+              else 
+                td= elm  
+            else if eidx==1 && ridx>0
               - let elmm=elm.split(":")
               td  
-                a(href=`/GCFin/${elm}`)= elm
-
+                a(href=`/GCFin/${elm}`)
+                  small= elm
+              td
                 small 
                   a(href=`https://www.google.com/finance/quote/${elmm[1]}:${elmm[0]}`) g
-                small 
-                  a(href=`http://www.aastocks.com/tc/stocks/quote/quick-quote.aspx?symbol=${Number(elmm[1])}`) a
+                if elmm[0]=="HKG"
+                  small 
+                    a(href=`http://www.aastocks.com/tc/stocks/quote/quick-quote.aspx?symbol=${Number(elmm[1])}`) a
+                if elmm[0]=="NASDAQ"
+                  small 
+                    a(href=`https://www.nasdaq.com/market-activity/stocks/${elmm[1]}`) n
+            else if eidx==1 && ridx==0
+              td code 
+              td stat                  
             else 
               td= elm
   script.
