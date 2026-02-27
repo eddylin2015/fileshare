@@ -79,6 +79,8 @@ html(lang="zh")
         });
         $('td').filter(function () {return this.innerHTML.match(/^[-]*[0-9\s\.,]+$/);}).css('text-align', 'right'); 
         $('td').filter(function () {return this.innerHTML.match(/^[-][0-9\s\.,]+$/);}).css('color', 'red'); 
+        $('td').filter(function () {return this.innerHTML.match(/^[#][N]/);}).css('text-align', 'right').css('font-size', '8px'); 
+        $('td').filter(function () {return this.innerHTML.match(/[%]$/);}).css('text-align', 'right'); 
       }); 
       window.addEventListener('load', function() {
         // Code to execute when the entire page and all resources are loaded
