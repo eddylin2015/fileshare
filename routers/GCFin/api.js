@@ -74,16 +74,25 @@ router.get('/', (req, res, next) => {
 });
 
 router.get('/:ticket', (req, res, next) => {
-    let  ticket=req.params.ticket.replace("_",":")
+    let  ticker=req.params.ticket.replace("_",":")
     const spreadsheetId = "1GMVVwNNDQy7zAb7JusUGiHs4opVsMiYjt_OlsRfRH3Y"; // Replace with your actual Spreadsheet ID
     const range = `HISTORY!A1:Z400`; // Replace with your actual sheet name and range (A1 notation)
     GCPSheetByParams_Renderer({ 
         spreadsheetId: spreadsheetId, 
         range: range,
         updrange:"HISTORY!A1",
-        updvalue:ticket }, (error, result) => {
+        updvalue:ticker }, (error, result) => {
         if (error) return console.log(error);
         let d = new Date().toLocaleString('sv').replace(/[: -]/g, "");
+        // __dirname       /routers/GCFIN/
+        // process.cwd()   /
+        fs.writeFile(path.resolve(process.cwd(), `www/FINDATA/Fin${d.slice(0,8)}_${ticker}.json`), result, err => {
+          if (err) {
+            console.error(err);
+          } else {
+            // file written successfully
+          }
+        });
         let resultobj = JSON.parse(result);
         res.render('GCFin/table_.pug', {
             books: resultobj,
