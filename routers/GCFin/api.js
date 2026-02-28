@@ -49,6 +49,16 @@ router.get('/', (req, res, next) => {
     GCPSheet_Renderer({ spreadsheetId: spreadsheetId, range: range }, (error, result) => {
         if (error) return console.log(error);
         let d = new Date().toLocaleString('sv').replace(/[: -]/g, "");
+        // __dirname       /routers/GCFIN/
+        // process.cwd()   /
+        fs.writeFile(path.resolve(process.cwd(), `www/FINDATA/Fin${d.slice(0,8)}.json`), result, err => {
+          if (err) {
+            console.error(err);
+          } else {
+            // file written successfully
+          }
+        });
+        
         let resultobj = JSON.parse(result);
         res.render('GCFin/table.pug', {
             books: resultobj,
