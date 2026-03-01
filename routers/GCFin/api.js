@@ -86,7 +86,7 @@ router.get('/:ticker', (req, res, next) => {
         let d = new Date().toLocaleString('sv').replace(/[: -]/g, "");
         // __dirname       /routers/GCFIN/
         // process.cwd()   /
-        fs.writeFile(path.resolve(process.cwd(), `www/FINDATA/Fin${d.slice(0,8)}_${ticker}.json`), result, err => {
+        fs.writeFile(path.resolve(process.cwd(), `www/FINDATA/Fin${d.slice(0,8)}_${ticker.replace(":","_")}.json`), result, err => {
           if (err) {
             console.error(err);
           } else {
